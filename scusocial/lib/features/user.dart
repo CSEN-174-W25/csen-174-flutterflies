@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart' show immutable;
 
 @immutable
 class UserModel {
-  // final String fullName;
+  final String fullName;
   // final DateTime birthDay;
   // final String gender;
   // final String email;
@@ -15,7 +15,7 @@ class UserModel {
   final List<String> receivedRequests;
 
   const UserModel({
-    // required this.fullName,
+    required this.fullName,
     // required this.birthDay,
     // required this.gender,
     // required this.email,
@@ -29,7 +29,7 @@ class UserModel {
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      // FirebaseFieldNames.fullName: fullName,
+      FirebaseFieldNames.fullName: fullName,
       // FirebaseFieldNames.birthDay: birthDay.millisecondsSinceEpoch,
       // FirebaseFieldNames.gender: gender,
       // FirebaseFieldNames.email: email,
@@ -44,7 +44,7 @@ class UserModel {
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      // fullName: map[FirebaseFieldNames.fullName] as String,
+      fullName: map[FirebaseFieldNames.fullName] as String,
       // birthDay: DateTime.fromMillisecondsSinceEpoch(
       //     map[FirebaseFieldNames.birthDay] as int),
       // gender: map[FirebaseFieldNames.gender] as String,

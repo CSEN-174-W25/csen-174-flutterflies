@@ -5,6 +5,7 @@ class FirebaseCollectionNames {
 }
 
 class FirebaseFieldNames {
+  static const fullName = "fullName";
   static const uid = "uid";
   static const receivedRequests = "receivedRequests";
   static const sentRequests = "sentRequests";
