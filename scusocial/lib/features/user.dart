@@ -43,20 +43,20 @@ class UserModel {
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
+    print('[DEBUG] Mapping Firestore data: $map');
+
+    String? name = map[FirebaseFieldNames.fullName] as String?;
+    print('[DEBUG] Extracted fullName: $name');
+
     return UserModel(
-      fullName: map[FirebaseFieldNames.fullName] as String,
-      // birthDay: DateTime.fromMillisecondsSinceEpoch(
-      //     map[FirebaseFieldNames.birthDay] as int),
-      // gender: map[FirebaseFieldNames.gender] as String,
-      // email: map[FirebaseFieldNames.email] as String,
-      // password: map[FirebaseFieldNames.password] as String,
-      // profilePicUrl: map[FirebaseFieldNames.profilePicUrl] as String,
-      uid: map[FirebaseFieldNames.uid] as String,
-      friends: List<String>.from((map[FirebaseFieldNames.friends] ?? [])),
-      sentRequests:
-          List<String>.from((map[FirebaseFieldNames.sentRequests] ?? [])),
-      receivedRequests:
-          List<String>.from((map[FirebaseFieldNames.receivedRequests] ?? [])),
+      fullName: name ?? 'Unknown User',
+      uid: map[FirebaseFieldNames.uid] as String? ?? '',
+      friends:
+          List<String>.from((map[FirebaseFieldNames.friends] ?? <String>[])),
+      sentRequests: List<String>.from(
+          (map[FirebaseFieldNames.sentRequests] ?? <String>[])),
+      receivedRequests: List<String>.from(
+          (map[FirebaseFieldNames.receivedRequests] ?? <String>[])),
     );
   }
 }

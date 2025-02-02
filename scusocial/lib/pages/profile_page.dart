@@ -1,14 +1,15 @@
-import 'package:scusocial/features/friends/add_friend_button.dart';
-import 'package:scusocial/pages/error_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scusocial/features/friends/add_friend_button.dart';
+import 'package:scusocial/pages/error_page.dart';
 import 'package:scusocial/features/friends/get_user_info_by_id_provider.dart';
 import 'package:scusocial/pages/loader.dart';
-// have to install dependencies flutter pub add flutter_riverpod
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:scusocial/pages/profile_setup_form.dart';
 
 class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key, required this.userId,});
+  const ProfileScreen({super.key, required this.userId});
 
   final String? userId;
 
@@ -16,61 +17,64 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final myUid = FirebaseAuth.instance.currentUser!.uid;
-    final uid = userId ?? myUid;
+    final myUid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = userId?.isNotEmpty == true ? userId : myUid;
+
     if (uid == null) {
-      print('user id null');
+      print('[DEBUG] User ID is null');
+      return const ErrorScreen(error: 'User ID not found.');
     }
+
+    print('[DEBUG] Fetching user data for UID: $uid');
     final userInfo = ref.watch(getUserInfoByIdProvider(uid));
 
     return userInfo.when(
       data: (user) {
-        return SafeArea(child: Scaffold(
-          backgroundColor: Colors.white,
-          body: Padding(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundImage: NetworkImage('https://flutter.github.io/assets-for-api-docs/assets/widgets/owl-2.jpg'),
-                  //NetworkImage(user.profilePicUrl),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  user.fullName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w400,
-                    fontSize: 21,
+        print('[DEBUG] Retrieved user data: $user');
+
+        // ✅ If user data is still null, try refreshing once
+        if (user == null || user.fullName == null) {
+          print('[ERROR] User data is null or incomplete!');
+
+          // Refresh Firestore data to ensure it updates
+          Future.delayed(Duration(milliseconds: 500), () {
+            ref.refresh(getUserInfoByIdProvider(uid));
+          });
+
+          return ProfileSetupForm(uid: uid);
+        }
+
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            body: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                children: [
+                  Text(
+                    user.fullName!,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 21,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                if (userId != myUid) AddFriendButton(
-                  user: user,
-                ),
-                //for later when we add user profile info 
-                //const SizedBox(height: 20),
-                // _buildProfileInfo(username: user.username),
-              ],
+                  const SizedBox(height: 20),
+                  if (userId != myUid) AddFriendButton(user: user),
+                ],
+              ),
             ),
-          ),
           ),
         );
       },
       error: (error, stackTrace) {
+        print('[ERROR] Fetching user data failed: $error');
+        print('[STACKTRACE] $stackTrace');
         return ErrorScreen(error: error.toString());
       },
       loading: () {
+        print('[DEBUG] Loading user data...');
         return const Loader();
       },
     );
   }
-
-  // _AddFriendButton() => FilledButton(onPressed: () {}, child: const Text('Add Friend') );
-
-  //for later use when we add info to a user profile
-  // _buildProfileInfo({
-  //   required String username,
-  // })
-
 }

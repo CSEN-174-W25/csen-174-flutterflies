@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:scusocial/pages/event_details_page.dart'; // Import EventDetailsPage
+import 'package:scusocial/pages/profile_page.dart'; // Import ProfileScreen
 
 class EventPage extends StatelessWidget {
   final User user;
@@ -14,8 +16,19 @@ class EventPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Welcome, ${user.displayName}'),
+        title: Text('Welcome, ${user.displayName ?? "User"}'),
         actions: [
+          IconButton(
+            icon: Icon(Icons.people), // Friends Icon
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfileScreen(userId: user.uid),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () => _createEvent(context),
@@ -259,122 +272,6 @@ class EventPage extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => EventDetailsPage(eventId: eventId, user: user),
       ),
-    );
-  }
-}
-
-class EventDetailsPage extends StatelessWidget {
-  final String eventId;
-  final User user;
-
-  EventDetailsPage({required this.eventId, required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Event Details'),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _CommentSection(eventId: eventId, user: user),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CommentSection extends StatefulWidget {
-  final String eventId;
-  final User user;
-
-  _CommentSection({required this.eventId, required this.user});
-
-  @override
-  __CommentSectionState createState() => __CommentSectionState();
-}
-
-class __CommentSectionState extends State<_CommentSection> {
-  final _commentController = TextEditingController();
-
-  String _formatTimestamp(Timestamp? timestamp) {
-    if (timestamp == null) return 'Unknown time';
-    final dateTime = timestamp.toDate();
-    return '${dateTime.toLocal()}'
-        .split('.')[0]; // Format as "YYYY-MM-DD HH:MM:SS"
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('events')
-              .doc(widget.eventId)
-              .collection('comments')
-              .orderBy('timestamp')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return Center(child: CircularProgressIndicator());
-            }
-
-            final comments = snapshot.data!.docs;
-            return ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: comments.length,
-              itemBuilder: (context, index) {
-                final comment = comments[index].data() as Map<String, dynamic>;
-                final userName = comment['userName'] ?? 'Anonymous';
-                final message = comment['message'] ?? '[No message]';
-                final timestamp = comment['timestamp'] as Timestamp?;
-
-                return ListTile(
-                  title: Text('$userName (${_formatTimestamp(timestamp)})'),
-                  subtitle: Text(message),
-                );
-              },
-            );
-          },
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _commentController,
-                  decoration: InputDecoration(labelText: 'Write a comment...'),
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.send),
-                onPressed: () async {
-                  final commentText = _commentController.text;
-                  if (commentText.isNotEmpty) {
-                    await FirebaseFirestore.instance
-                        .collection('events')
-                        .doc(widget.eventId)
-                        .collection('comments')
-                        .add({
-                      'userName': widget.user.displayName ?? 'Anonymous',
-                      'message':
-                          commentText.isNotEmpty ? commentText : '[No message]',
-                      'timestamp': FieldValue.serverTimestamp(),
-                    });
-
-                    _commentController.clear();
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

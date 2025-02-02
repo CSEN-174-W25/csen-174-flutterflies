@@ -5,15 +5,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /*
   Fetches data for any specific user by id once when needed
-*/ 
+*/
 
 final getUserInfoByIdProvider =
-    FutureProvider.autoDispose.family<UserModel, String>((ref, userId) {
-  return FirebaseFirestore.instance
-      .collection(FirebaseCollectionNames.users)
-      .doc(userId)
-      .get()
-      .then((userData) {
-    return UserModel.fromMap(userData.data()!);
-  });
+    FutureProvider.family<UserModel?, String>((ref, uid) async {
+  final doc =
+      await FirebaseFirestore.instance.collection('users').doc(uid).get();
+
+  if (!doc.exists) {
+    print('[ERROR] No document found for UID: $uid');
+    return null;
+  }
+
+  final data = doc.data();
+  print('[DEBUG] Firestore returned data: $data');
+
+  return data != null ? UserModel.fromMap(data) : null;
 });
