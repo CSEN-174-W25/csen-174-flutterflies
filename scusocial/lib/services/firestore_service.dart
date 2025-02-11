@@ -67,4 +67,28 @@ class FirestoreService {
       return [];
     }
   }
+
+  Future<void> addComment({
+    required String eventId,
+    required String userName,
+    required String message,
+  }) async {
+    if (message.isEmpty) return;
+
+    await _firestore.collection('events').doc(eventId).collection('comments').add({
+      'userName': userName.isNotEmpty ? userName : 'Anonymous',
+      'message': message,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Fetches comments for an event (useful for testing)
+  Stream<QuerySnapshot> getComments(String eventId) {
+    return _firestore
+        .collection('events')
+        .doc(eventId)
+        .collection('comments')
+        .orderBy('timestamp')
+        .snapshots();
+  }
 }
