@@ -47,4 +47,24 @@ class FirestoreService {
       });
     });
   }
+
+  /// Searches for users in Firestore whose `fullName` starts with `query`
+  Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+    if (query.isEmpty) {
+      return [];
+    }
+
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .where('fullName', isGreaterThanOrEqualTo: query)
+          .where('fullName', isLessThanOrEqualTo: query + '\uf8ff')
+          .get();
+
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      print("Error during search: $e");
+      return [];
+    }
+  }
 }
