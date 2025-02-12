@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import '../../services/firestore_service.dart';
 
 class EventDetailsPage extends StatefulWidget {
   final String eventId;
@@ -14,26 +15,27 @@ class EventDetailsPage extends StatefulWidget {
 }
 
 class _EventDetailsPageState extends State<EventDetailsPage> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final _commentController = TextEditingController();
+  final FirestoreService _firestoreService =
+      FirestoreService(firestore: FirebaseFirestore.instance);
+  final TextEditingController _commentController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Event Details'),
+        title: const Text('Event Details'),
       ),
       body: Column(
         children: [
           Expanded(
             child: StreamBuilder<DocumentSnapshot>(
-              stream: _firestore
+              stream: FirebaseFirestore.instance
                   .collection('events')
                   .doc(widget.eventId)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 final event = snapshot.data!;
@@ -45,47 +47,39 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 final eventLocation = eventData['location'];
 
                 return ListView(
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                   children: [
                     Text(
                       eventName,
                       style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                          const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                     ),
                     Text('Date: ${eventDate.toLocal()}'),
                     Text('Time: $eventTime'),
                     Text('Location: $eventLocation'),
                     Text('Description: $eventDescription'),
-                    SizedBox(height: 16),
-                    Text('Comments:',
+                    const SizedBox(height: 16),
+                    const Text('Comments:',
                         style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     StreamBuilder<QuerySnapshot>(
-                      stream: _firestore
-                          .collection('events')
-                          .doc(widget.eventId)
-                          .collection('comments')
-                          .orderBy('timestamp')
-                          .snapshots(),
+                      stream: _firestoreService.getComments(widget.eventId),
                       builder: (context, commentSnapshot) {
                         if (!commentSnapshot.hasData) {
-                          return Center(child: CircularProgressIndicator());
+                          return const Center(child: CircularProgressIndicator());
                         }
 
                         final comments = commentSnapshot.data!.docs;
                         return ListView.builder(
                           shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           itemCount: comments.length,
                           itemBuilder: (context, index) {
                             final comment =
                                 comments[index].data() as Map<String, dynamic>;
-                            final userName = comment['userName'] ??
-                                'Anonymous'; // Default to 'Anonymous'
-                            final message = comment['message'] ??
-                                '[No message]'; // Default message if missing
-                            final timestamp =
-                                comment['timestamp'] as Timestamp?;
+                            final userName = comment['userName'] ?? 'Anonymous';
+                            final message = comment['message'] ?? '[No message]';
+                            final timestamp = comment['timestamp'] as Timestamp?;
                             final formattedTime = timestamp != null
                                 ? DateFormat.yMMMd()
                                     .add_jm()
@@ -100,7 +94,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                         );
                       },
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Row(
@@ -108,25 +102,20 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                           Expanded(
                             child: TextField(
                               controller: _commentController,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                   labelText: 'Write a comment...'),
                             ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.send),
+                            icon: const Icon(Icons.send),
                             onPressed: () async {
-                              final commentText = _commentController.text;
+                              final commentText = _commentController.text.trim();
                               if (commentText.isNotEmpty) {
-                                await _firestore
-                                    .collection('events')
-                                    .doc(widget.eventId)
-                                    .collection('comments')
-                                    .add({
-                                  'userName':
-                                      widget.user.displayName ?? 'Anonymous',
-                                  'message': commentText,
-                                  'timestamp': FieldValue.serverTimestamp(),
-                                });
+                                await _firestoreService.addComment(
+                                  eventId: widget.eventId,
+                                  userName: widget.user.displayName ?? 'Anonymous',
+                                  message: commentText,
+                                );
                                 _commentController.clear();
                               }
                             },
