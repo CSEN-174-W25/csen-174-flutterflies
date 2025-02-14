@@ -15,6 +15,7 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
 
+
   // Inject Firebase instances into FriendRepository
   late final FriendRepository _friendRepo;
 
@@ -27,7 +28,8 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
     );
   }
 
-  // Function to search users by fullName
+  // Function to search users by `fullName`
+
   void _searchUsers(String query) async {
     if (query.isEmpty) {
       setState(() {

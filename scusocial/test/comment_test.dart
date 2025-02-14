@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:scusocial/services/firestore_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+
 void main() {
   test('Fake Firestore: Add and Retrieve Comments', () async {
     final fakeFirestore = FakeFirebaseFirestore();
@@ -37,6 +38,7 @@ void main() {
     expect(commentData['message'], message);
     expect(commentData.containsKey('timestamp'), true);
   });
+
   test('Fake Firestore: Add and Retrieve Comments with empty message',
       () async {
     final fakeFirestore = FakeFirebaseFirestore();
@@ -200,4 +202,5 @@ void main() {
     expect(commentData['message'], message);
     expect(commentData.containsKey('timestamp'), true);
   });
+
 }
