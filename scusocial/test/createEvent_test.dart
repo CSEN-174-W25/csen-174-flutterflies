@@ -38,7 +38,6 @@ void main() {
     expect(eventData['time'], time);
     expect(eventData['creatorId'], creatorId);
   });
-  // create 5 more similar tests
   test('Fake Firestore: Add and Retrieve Events 2', () async {
     final fakeFirestore = FakeFirebaseFirestore();
 
