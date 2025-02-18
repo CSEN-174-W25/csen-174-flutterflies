@@ -46,17 +46,19 @@ class FriendRepository {
     }
   }
 
-  // Accept friend request
   Future<String?> acceptFriendRequest({required String userId}) async {
     try {
       final requestRef = firestore
           .collection(FirebaseCollectionNames.friendRequests)
           .doc('${userId}_$_myUid');
 
+      print("Accepting friend request from $userId");
+
       // Update request status to accepted
       await requestRef.update({FirebaseFieldNames.status: "accepted"});
 
       // Add each user to the other's friends list
+      print("Adding $userId to $_myUid friends list");
       await firestore
           .collection(FirebaseCollectionNames.users)
           .doc(_myUid)
@@ -64,6 +66,7 @@ class FriendRepository {
         FirebaseFieldNames.friends: FieldValue.arrayUnion([userId])
       });
 
+      print("Adding $_myUid to $userId's friends list");
       await firestore
           .collection(FirebaseCollectionNames.users)
           .doc(userId)
@@ -71,6 +74,11 @@ class FriendRepository {
         FirebaseFieldNames.friends: FieldValue.arrayUnion([_myUid])
       });
 
+      // **Delete the request after both users have been added as friends**
+      print("Friend request accepted. Deleting request...");
+      await requestRef.delete();
+
+      print("Friend request deleted.");
       return null;
     } catch (e) {
       print("Error accepting friend request: $e");
