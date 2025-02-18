@@ -21,45 +21,22 @@ class FriendRepository {
       await docRef.set({
         FirebaseFieldNames.uid: uid,
         FirebaseFieldNames.friends: [],
-        FirebaseFieldNames.receivedRequests: [],
-        FirebaseFieldNames.sentRequests: [],
         FirebaseFieldNames.buttonPressCount: 0, // Default value
       });
     }
   }
 
-  // Send friend request
+  // Send friend request (stores request in 'friendRequests' collection)
   Future<String?> sendFriendRequest({required String userId}) async {
     try {
-      final receiverDocRef =
-          firestore.collection(FirebaseCollectionNames.users).doc(userId);
-      final senderDocRef =
-          firestore.collection(FirebaseCollectionNames.users).doc(_myUid);
+      final requestRef = firestore
+          .collection(FirebaseCollectionNames.friendRequests)
+          .doc('${_myUid}_$userId');
 
-      final receiverSnapshot = await receiverDocRef.get();
-      if (!receiverSnapshot.exists) {
-        await receiverDocRef.set({
-          FirebaseFieldNames.receivedRequests: [_myUid],
-        });
-      } else {
-        await receiverDocRef.update({
-          FirebaseFieldNames.receivedRequests: FieldValue.arrayUnion([_myUid]),
-        });
-      }
-
-      final senderSnapshot = await senderDocRef.get();
-      if (!senderSnapshot.exists) {
-        await senderDocRef.set({
-          FirebaseFieldNames.uid: _myUid,
-          FirebaseFieldNames.friends: [],
-          FirebaseFieldNames.receivedRequests: [],
-          FirebaseFieldNames.sentRequests: [],
-          FirebaseFieldNames.buttonPressCount: 0
-        });
-      }
-
-      await senderDocRef.update({
-        FirebaseFieldNames.sentRequests: FieldValue.arrayUnion([userId]),
+      await requestRef.set({
+        FirebaseFieldNames.from: _myUid,
+        FirebaseFieldNames.to: userId,
+        FirebaseFieldNames.status: "pending"
       });
 
       return null;
@@ -72,22 +49,28 @@ class FriendRepository {
   // Accept friend request
   Future<String?> acceptFriendRequest({required String userId}) async {
     try {
-      await firestore
-          .collection(FirebaseCollectionNames.users)
-          .doc(userId)
-          .update({
-        FirebaseFieldNames.friends: FieldValue.arrayUnion([_myUid]),
-      });
+      final requestRef = firestore
+          .collection(FirebaseCollectionNames.friendRequests)
+          .doc('${userId}_$_myUid');
 
+      // Update request status to accepted
+      await requestRef.update({FirebaseFieldNames.status: "accepted"});
+
+      // Add each user to the other's friends list
       await firestore
           .collection(FirebaseCollectionNames.users)
           .doc(_myUid)
           .update({
-        FirebaseFieldNames.friends: FieldValue.arrayUnion([userId]),
+        FirebaseFieldNames.friends: FieldValue.arrayUnion([userId])
       });
-      print("Friend request accepted");
 
-      await removeFriendRequest(userId: userId);
+      await firestore
+          .collection(FirebaseCollectionNames.users)
+          .doc(userId)
+          .update({
+        FirebaseFieldNames.friends: FieldValue.arrayUnion([_myUid])
+      });
+
       return null;
     } catch (e) {
       print("Error accepting friend request: $e");
@@ -95,29 +78,17 @@ class FriendRepository {
     }
   }
 
-  // Remove friend request
-  Future<String?> removeFriendRequest({required String userId}) async {
-    print("Removing friend request from $userId");
+  // Decline (or cancel) friend request
+  Future<String?> declineFriendRequest({required String userId}) async {
     try {
-      print('Removing received request containing $userId from $_myUid');
-      await firestore
-          .collection(FirebaseCollectionNames.users)
-          .doc(_myUid)
-          .update({
-        FirebaseFieldNames.receivedRequests: FieldValue.arrayRemove([userId]),
-      });
-      // cant remove from another users sent requests because we dont have access to it
-      // await firestore
-      //     .collection(FirebaseCollectionNames.users)
-      //     .doc(userId)
-      //     .update({
-      //   FirebaseFieldNames.sentRequests: FieldValue.arrayRemove([_myUid]),
-      // });
-      print("Friend request removed");
+      final requestRef = firestore
+          .collection(FirebaseCollectionNames.friendRequests)
+          .doc('${userId}_$_myUid');
 
+      await requestRef.delete();
       return null;
     } catch (e) {
-      print("Error removing friend request: $e");
+      print("Error declining friend request: $e");
       return e.toString();
     }
   }
@@ -127,20 +98,21 @@ class FriendRepository {
     try {
       await firestore
           .collection(FirebaseCollectionNames.users)
-          .doc(userId)
+          .doc(_myUid)
           .update({
-        FirebaseFieldNames.friends: FieldValue.arrayRemove([_myUid]),
+        FirebaseFieldNames.friends: FieldValue.arrayRemove([userId])
       });
 
       await firestore
           .collection(FirebaseCollectionNames.users)
-          .doc(_myUid)
+          .doc(userId)
           .update({
-        FirebaseFieldNames.friends: FieldValue.arrayRemove([userId]),
+        FirebaseFieldNames.friends: FieldValue.arrayRemove([_myUid])
       });
 
       return null;
     } catch (e) {
+      print("Error removing friend: $e");
       return e.toString();
     }
   }

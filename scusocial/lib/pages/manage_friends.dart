@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../features/friends/friend-repo.dart';
+import '../core/constants/firebase_constants.dart';
 
 class ManageFriends extends StatefulWidget {
   @override
@@ -23,15 +24,18 @@ class _ManageFriendsState extends State<ManageFriends> {
   Stream<List<String>> _getFriendRequests() {
     String myUid = FirebaseAuth.instance.currentUser!.uid;
     print('Fetching friend requests for user: $myUid');
+
     return FirebaseFirestore.instance
-        .collection('users')
-        .doc(myUid)
+        .collection(FirebaseCollectionNames.friendRequests)
+        .where(FirebaseFieldNames.to, isEqualTo: myUid)
+        .where(FirebaseFieldNames.status, isEqualTo: "pending")
         .snapshots()
         .map((snapshot) {
-      if (snapshot.exists) {
-        return List<String>.from(snapshot.data()?['receivedRequests'] ?? []);
-      }
-      return [];
+      print(
+          "Raw snapshot data: ${snapshot.docs.map((doc) => doc.data()).toList()}"); // Debugging line
+      return snapshot.docs
+          .map((doc) => doc[FirebaseFieldNames.from] as String)
+          .toList();
     });
   }
 
@@ -42,7 +46,7 @@ class _ManageFriendsState extends State<ManageFriends> {
 
   Future<void> _declineRequest(String userId) async {
     print('Declining friend request from $userId');
-    await friendRepository.removeFriendRequest(userId: userId);
+    await friendRepository.declineFriendRequest(userId: userId);
   }
 
   @override
@@ -57,6 +61,9 @@ class _ManageFriendsState extends State<ManageFriends> {
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            // print getfriendrequests data
+            print('Friend requests data: ${snapshot.data}');
+
             return Center(child: Text('No friend requests.'));
           }
 
