@@ -4,7 +4,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/calendar_service.dart';
 
-
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -13,7 +12,6 @@ class AuthService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final CalendarService _calendarService = CalendarService();
-
 
   Future<User?> signInWithGoogle() async {
     try {
@@ -36,13 +34,11 @@ class AuthService {
       }
 
       return user;
-
     } catch (e) {
       print('Google Sign-In Error: $e');
       return null;
     }
   }
-
 
   Future<void> _initializeUser(User user) async {
     final userDoc = await _firestore.collection('users').doc(user.uid).get();
@@ -52,8 +48,6 @@ class AuthService {
         'fullName': user.displayName ?? '',
         'uid': user.uid,
         'friends': [], // Initialize as empty array
-        'sentRequests': [],
-        'receivedRequests': [],
         'calendarId': null, // Placeholder for calendar fields
         'calendarLink': null,
       }, SetOptions(merge: true));

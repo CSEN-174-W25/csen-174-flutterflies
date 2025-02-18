@@ -26,27 +26,6 @@ class FirestoreService {
       'accepted': [],
     });
   }
-    Future<void> sendFriendRequest(String senderId, String receiverId) async {
-    final senderRef = _firestore.collection('users').doc(senderId);
-    final receiverRef = _firestore.collection('users').doc(receiverId);
-
-    await _firestore.runTransaction((transaction) async {
-      final senderSnapshot = await transaction.get(senderRef);
-      final receiverSnapshot = await transaction.get(receiverRef);
-
-      if (!senderSnapshot.exists || !receiverSnapshot.exists) {
-        throw Exception('User not found');
-      }
-
-      transaction.update(senderRef, {
-        'sentRequests': FieldValue.arrayUnion([receiverId]),
-      });
-
-      transaction.update(receiverRef, {
-        'receivedRequests': FieldValue.arrayUnion([senderId]),
-      });
-    });
-  }
 
   /// Searches for users in Firestore whose `fullName` starts with `query`
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {
@@ -75,7 +54,11 @@ class FirestoreService {
   }) async {
     if (message.isEmpty) return;
 
-    await _firestore.collection('events').doc(eventId).collection('comments').add({
+    await _firestore
+        .collection('events')
+        .doc(eventId)
+        .collection('comments')
+        .add({
       'userName': userName.isNotEmpty ? userName : 'Anonymous',
       'message': message,
       'timestamp': FieldValue.serverTimestamp(),
