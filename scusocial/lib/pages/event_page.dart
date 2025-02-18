@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/calendar_service.dart';
 import '../features/friends/search_user_screen.dart';
 import '../services/firestore_service.dart';
+import '../pages/manage_friends.dart';
 
 class EventPage extends StatelessWidget {
   final User user;
@@ -42,6 +43,18 @@ class EventPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const SearchUserScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.group),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ManageFriends(), // Make sure this is the correct class name
                 ),
               );
             },
@@ -571,6 +584,21 @@ class ProfileScreen extends StatelessWidget {
           },
           child: const Text('Search Users'),
         ),
+      ),
+    );
+  }
+}
+
+class ManageFriendsScreen extends StatelessWidget {
+  const ManageFriendsScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Manage Friends'),
+      ),
+      body: const Center(
+        child: Text('Manage your friends here!'),
       ),
     );
   }
