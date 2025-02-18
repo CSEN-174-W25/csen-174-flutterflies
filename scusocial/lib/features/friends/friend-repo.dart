@@ -85,33 +85,39 @@ class FriendRepository {
           .update({
         FirebaseFieldNames.friends: FieldValue.arrayUnion([userId]),
       });
+      print("Friend request accepted");
 
       await removeFriendRequest(userId: userId);
       return null;
     } catch (e) {
+      print("Error accepting friend request: $e");
       return e.toString();
     }
   }
 
   // Remove friend request
   Future<String?> removeFriendRequest({required String userId}) async {
+    print("Removing friend request from $userId");
     try {
-      await firestore
-          .collection(FirebaseCollectionNames.users)
-          .doc(userId)
-          .update({
-        FirebaseFieldNames.receivedRequests: FieldValue.arrayRemove([_myUid]),
-      });
-
+      print('Removing received request containing $userId from $_myUid');
       await firestore
           .collection(FirebaseCollectionNames.users)
           .doc(_myUid)
           .update({
-        FirebaseFieldNames.sentRequests: FieldValue.arrayRemove([userId]),
+        FirebaseFieldNames.receivedRequests: FieldValue.arrayRemove([userId]),
       });
+      // cant remove from another users sent requests because we dont have access to it
+      // await firestore
+      //     .collection(FirebaseCollectionNames.users)
+      //     .doc(userId)
+      //     .update({
+      //   FirebaseFieldNames.sentRequests: FieldValue.arrayRemove([_myUid]),
+      // });
+      print("Friend request removed");
 
       return null;
     } catch (e) {
+      print("Error removing friend request: $e");
       return e.toString();
     }
   }
