@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:scusocial/pages/profile_screen.dart';
 
 // import calendar servcie
 import '../services/calendar_service.dart';
@@ -31,6 +32,15 @@ class EventPage extends StatelessWidget {
           onPressed: () => _showCalendarSubscriptionLink(context),
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.person),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileScreen(userId: user.uid,)),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () => _createEvent(context, user.uid, _firestoreService),
@@ -552,26 +562,6 @@ class __CommentSectionState extends State<_CommentSection> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SearchUserScreen()),
-            );
-          },
-          child: const Text('Search Users'),
-        ),
-      ),
     );
   }
 }

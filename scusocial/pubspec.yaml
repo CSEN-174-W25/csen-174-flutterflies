@@ -76,6 +76,8 @@ flutter:
 
   assets:
     - lib/utils/herd-aad12-6627b3250dc9.json
+    # /Users/madelinefollosco/Documents/secrets/herd-aad12-6627b3250dc9.json
+    # lib/utils/herd-aad12-6627b3250dc9.json
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
