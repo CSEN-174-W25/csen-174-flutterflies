@@ -38,7 +38,8 @@ class EventPage extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ProfileScreen(userId: user.uid)),
+                MaterialPageRoute(
+                    builder: (context) => ProfileScreen(userId: user.uid)),
               );
             },
           ),
@@ -226,156 +227,158 @@ class EventPage extends StatelessWidget {
   }
 
   void _createEvent(
-    BuildContext context, String userId, FirestoreService firestoreService) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      final TextEditingController nameController = TextEditingController();
-      final TextEditingController descriptionController = TextEditingController();
-      final TextEditingController locationController = TextEditingController();
-      DateTime? selectedDate;
-      TimeOfDay? selectedTime;
-      String selectedVisibility = 'Public';
-      final List<String> visibilityOptions = [
-        'Public',
-        'Visible to all friends',
-        'Visible to a particular group'
-      ];
-      String? selectedGroup; // For specific group selection
-      
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text('Create Event'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(labelText: 'Event Name'),
-                  ),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: InputDecoration(labelText: 'Description'),
-                  ),
-                  TextField(
-                    controller: locationController,
-                    decoration: InputDecoration(labelText: 'Location'),
-                  ),
-                  SizedBox(height: 10),
-                  
-                  // Date Picker
-                  ListTile(
-                    title: Text(selectedDate == null
-                        ? 'Select Date'
-                        : 'Date: ${selectedDate!.toLocal()}'.split(' ')[0]),
-                    trailing: Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          selectedDate = pickedDate;
-                        });
-                      }
-                    },
-                  ),
-                  
-                  // Time Picker
-                  ListTile(
-                    title: Text(selectedTime == null
-                        ? 'Select Time'
-                        : 'Time: ${selectedTime!.format(context)}'),
-                    trailing: Icon(Icons.access_time),
-                    onTap: () async {
-                      final pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (pickedTime != null) {
-                        setState(() {
-                          selectedTime = pickedTime;
-                        });
-                      }
-                    },
-                  ),
-                  
-                  // Visibility Dropdown
-                  DropdownButton<String>(
-                    value: selectedVisibility,
-                    onChanged: (newValue) {
-                      setState(() {
-                        selectedVisibility = newValue!;
-                      });
-                    },
-                    items: visibilityOptions.map((String option) {
-                      return DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(option),
-                      );
-                    }).toList(),
-                  ),
-                  
-                  // Group Selection (only if "Visible to a particular group" is chosen)
-                  if (selectedVisibility == 'Visible to a particular group')
+      BuildContext context, String userId, FirestoreService firestoreService) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final TextEditingController nameController = TextEditingController();
+        final TextEditingController descriptionController =
+            TextEditingController();
+        final TextEditingController locationController =
+            TextEditingController();
+        DateTime? selectedDate;
+        TimeOfDay? selectedTime;
+        String selectedVisibility = 'Public';
+        final List<String> visibilityOptions = [
+          'Public',
+          'Visible to all friends',
+          'Visible to a particular group'
+        ];
+        String? selectedGroup; // For specific group selection
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Create Event'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     TextField(
-                      decoration: InputDecoration(labelText: 'Enter Group Name'),
-                      onChanged: (value) {
-                        selectedGroup = value;
+                      controller: nameController,
+                      decoration: InputDecoration(labelText: 'Event Name'),
+                    ),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: InputDecoration(labelText: 'Description'),
+                    ),
+                    TextField(
+                      controller: locationController,
+                      decoration: InputDecoration(labelText: 'Location'),
+                    ),
+                    SizedBox(height: 10),
+
+                    // Date Picker
+                    ListTile(
+                      title: Text(selectedDate == null
+                          ? 'Select Date'
+                          : 'Date: ${selectedDate!.toLocal()}'.split(' ')[0]),
+                      trailing: Icon(Icons.calendar_today),
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            selectedDate = pickedDate;
+                          });
+                        }
                       },
                     ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (nameController.text.isNotEmpty &&
-                      descriptionController.text.isNotEmpty &&
-                      locationController.text.isNotEmpty &&
-                      selectedDate != null &&
-                      selectedTime != null &&
-                      (selectedVisibility != 'Visible to a particular group' || selectedGroup != null)) {
-                    // Convert TimeOfDay to a string format
-                    final formattedTime = selectedTime!.format(context);
-                    
-                    firestoreService.createEvent(
-                      nameController.text,
-                      descriptionController.text,
-                      locationController.text,
-                      selectedDate!,
-                      formattedTime,
-                      userId,
-                      selectedVisibility,
-                      selectedGroup ?? '',
-                    );
-                    Navigator.pop(context);
-                  } else {
-                    // Show error if fields are missing
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please fill in all fields')),
-                    );
-                  }
-                },
-                child: Text('Create'),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
 
+                    // Time Picker
+                    ListTile(
+                      title: Text(selectedTime == null
+                          ? 'Select Time'
+                          : 'Time: ${selectedTime!.format(context)}'),
+                      trailing: Icon(Icons.access_time),
+                      onTap: () async {
+                        final pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (pickedTime != null) {
+                          setState(() {
+                            selectedTime = pickedTime;
+                          });
+                        }
+                      },
+                    ),
+
+                    // Visibility Dropdown
+                    DropdownButton<String>(
+                      value: selectedVisibility,
+                      onChanged: (newValue) {
+                        setState(() {
+                          selectedVisibility = newValue!;
+                        });
+                      },
+                      items: visibilityOptions.map((String option) {
+                        return DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(option),
+                        );
+                      }).toList(),
+                    ),
+
+                    // Group Selection (only if "Visible to a particular group" is chosen)
+                    if (selectedVisibility == 'Visible to a particular group')
+                      TextField(
+                        decoration:
+                            InputDecoration(labelText: 'Enter Group Name'),
+                        onChanged: (value) {
+                          selectedGroup = value;
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (nameController.text.isNotEmpty &&
+                        descriptionController.text.isNotEmpty &&
+                        locationController.text.isNotEmpty &&
+                        selectedDate != null &&
+                        selectedTime != null &&
+                        (selectedVisibility !=
+                                'Visible to a particular group' ||
+                            selectedGroup != null)) {
+                      // Convert TimeOfDay to a string format
+                      final formattedTime = selectedTime!.format(context);
+
+                      firestoreService.createEvent(
+                        nameController.text,
+                        descriptionController.text,
+                        locationController.text,
+                        selectedDate!,
+                        formattedTime,
+                        userId,
+                      );
+                      Navigator.pop(context);
+                    } else {
+                      // Show error if fields are missing
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please fill in all fields')),
+                      );
+                    }
+                  },
+                  child: Text('Create'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _respondToEvent(String eventId, bool accept) async {
     final eventDoc = _firestore.collection('events').doc(eventId);
