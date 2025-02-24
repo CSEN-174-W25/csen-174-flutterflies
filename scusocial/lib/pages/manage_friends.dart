@@ -61,53 +61,51 @@ class _ManageFriendsState extends State<ManageFriends> {
     return Scaffold(
       appBar: AppBar(title: Text('Manage Friends')),
       body: Column(
-        children:[ 
+        children: [
           Expanded(
             child: StreamBuilder<List<String>>(
-            stream: _getFriendRequests(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              }
+              stream: _getFriendRequests(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
 
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                // print getfriendrequests data
-                print('Friend requests data: ${snapshot.data}');
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  print('Friend requests data: ${snapshot.data}');
+                  return Center(child: Text('No friend requests.'));
+                }
 
-                return Center(child: Text('No friend requests.'));
-              }
+                List<String> friendRequests = snapshot.data!;
 
-              List<String> friendRequests = snapshot.data!;
+                return ListView.builder(
+                  itemCount: friendRequests.length,
+                  itemBuilder: (context, index) {
+                    String userId = friendRequests[index];
 
-              return ListView.builder(
-                itemCount: friendRequests.length,
-                itemBuilder: (context, index) {
-                  String userId = friendRequests[index];
-
-                  return ListTile(
-                    title: Text('User ID: $userId'),
-                    subtitle: Text('Wants to be your friend'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.check, color: Colors.green),
-                          onPressed: () async {
-                            await _acceptRequest(userId);
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close, color: Colors.red),
-                          onPressed: () async {
-                            await _declineRequest(userId);
-                          },
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
+                    return ListTile(
+                      title: Text('User ID: $userId'),
+                      subtitle: Text('Wants to be your friend'),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.check, color: Colors.green),
+                            onPressed: () async {
+                              await _acceptRequest(userId);
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.close, color: Colors.red),
+                            onPressed: () async {
+                              await _declineRequest(userId);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
           Divider(),
@@ -128,8 +126,8 @@ class _ManageFriendsState extends State<ManageFriends> {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
-                if(!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('U lonely bitch. No friends found'));
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(child: Text('No friends found'));
                 }
 
                 List<String> friends = snapshot.data!;
@@ -141,11 +139,16 @@ class _ManageFriendsState extends State<ManageFriends> {
 
                     return ListTile(
                       title: Text('Friend name: $friendName'),
+                      trailing: IconButton(
+                        icon: Icon(Icons.remove_circle, color: Colors.red),
+                        onPressed: () {
+                          friendRepository.removeFriend(userId: friendName);
+                        },
+                      ),
                     );
                   },
                 );
               },
-
             ),
           ),
         ],
