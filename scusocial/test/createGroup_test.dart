@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:scusocial/pages/create_Group.dart';
+import 'package:scusocial/pages/group/create_group.dart';
 
 // Tests the MyCustomForm class
 void main() {
