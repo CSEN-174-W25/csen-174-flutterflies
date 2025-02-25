@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scusocial/features/friends/get_user_info_by_id_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:scusocial/services/auth_service.dart';
 
 class ProfileScreen extends ConsumerWidget {
-  const ProfileScreen({super.key, required this.userId,});
+  const ProfileScreen({
+    super.key,
+    required this.userId,
+  });
 
   final String userId;
 
@@ -15,49 +16,47 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final myUid = FirebaseAuth.instance.currentUser!.uid;
+    final userName = FirebaseAuth.instance.currentUser!.displayName;
+    final userPhoto = FirebaseAuth.instance.currentUser!.photoURL;
     final userInfo = ref.watch(getUserInfoByIdProvider(userId));
 
     return userInfo.when(
       data: (user) {
-        return SafeArea(child: 
-        Center(
-          child: Scaffold(
-          backgroundColor: Colors.white,
-          body: Padding(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  //backgroundImage: NetworkImage(user.profilePicUrl),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  //should be user full name
-                  user.uid,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w400,
-                    fontSize: 21,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // ElevatedButton(
-                //   child: Text('Friend List'), 
-                //   onPressed: () {
-                //     Navigator.push(
-                //       context,
-                //       MaterialPageRoute(
-                //         builder: (context) => const SearchUserScreen(),
-                //       ),
-                //     );
-                //   },
-                // ),
-              ],
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Profile'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                Navigator.pop(context);
+              },
             ),
           ),
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: NetworkImage(userPhoto!),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      userName!,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 21,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
           ),
-        )
         );
       },
       error: (error, stackTrace) {
@@ -66,7 +65,7 @@ class ProfileScreen extends ConsumerWidget {
       },
       loading: () {
         print('Loading...');
-        return Center(child: Text('Loading...'));
+        return const Center(child: CircularProgressIndicator());
       },
     );
   }
