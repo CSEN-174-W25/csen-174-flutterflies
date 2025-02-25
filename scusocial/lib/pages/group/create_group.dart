@@ -19,7 +19,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
       await FirebaseFirestore.instance.collection('groups').add({
         'name': _nameController.text,
         'description': _descriptionController.text,
-        'members': [],
+        'members': [userID],
         'leader': userID,
       });
 

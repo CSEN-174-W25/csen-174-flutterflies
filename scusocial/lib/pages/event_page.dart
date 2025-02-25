@@ -9,7 +9,6 @@ import '../services/firestore_service.dart';
 import '../pages/manage_friends.dart';
 import 'group/create_group.dart';
 import 'group/search_group.dart';
-import 'group/join_group.dart';
 
 class EventPage extends StatelessWidget {
   final User user;

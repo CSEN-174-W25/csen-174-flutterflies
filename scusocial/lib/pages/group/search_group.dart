@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import './join_group.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SearchGroupPage extends StatefulWidget {
@@ -20,9 +19,13 @@ class _SearchGroupPageState extends State<SearchGroupPage> {
         'members': FieldValue.arrayUnion([user.uid]),
       });
 
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You have joined the group')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You need to be logged in to join a group')),
+      );
     }
   }
 
@@ -40,7 +43,10 @@ class _SearchGroupPageState extends State<SearchGroupPage> {
 
     setState(() {
       _searchResults = snapshot.docs
-          .map((doc) => doc.data() as Map<String, dynamic>)
+          .map((doc) => {
+                'id': doc.id,
+                ...doc.data(),
+              })
           .toList();
       _isLoading = false;
     });
