@@ -83,6 +83,19 @@ class EventPage extends StatelessWidget {
               );
             },
           ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'sign_out') {
+                signOut();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'sign_out',
+                child: Text('Sign Out'),
+              ),
+            ],
+          ),
         ],
       ),
       body: FutureBuilder<DocumentSnapshot>(
