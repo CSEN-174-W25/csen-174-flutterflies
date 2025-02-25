@@ -34,16 +34,6 @@ class EventPage extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => ProfileScreen(userId: user.uid)),
-              );
-            },
-          ),
-          IconButton(
             icon: Icon(Icons.add),
             onPressed: () => _createEvent(context, user.uid, _firestoreService),
           ),
@@ -64,30 +54,54 @@ class EventPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      ManageFriends(), // Make sure this is the correct class name
+                  builder: (context) => ManageFriends(),
                 ),
               );
             },
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('events').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
+      body: FutureBuilder<DocumentSnapshot>(
+        future: _firestore.collection('users').doc(user.uid).get(),
+        builder: (context, userSnapshot) {
+          if (!userSnapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+          final List<String> friendsList =
+              List<String>.from(userData?['friends'] ?? []);
+
+          return StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('events').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              final events = snapshot.data!.docs;
+
+              final filteredEvents = events.where((event) {
+                final eventData = event.data() as Map<String, dynamic>;
+                final String visibility = eventData['visibility'] ?? 'Public';
+                final String creatorId = eventData['creatorId'];
+
+                if (visibility == 'Public') return true;
+                if (visibility == 'Visible to all friends' &&
+                    friendsList.contains(creatorId)) {
+                  return true;
                 }
+                if (visibility == 'Visible to a particular group') {
+                  return true; // Treat as public for now
+                }
+                return false;
+              }).toList();
 
-                final events = snapshot.data!.docs;
-
-                return ListView.builder(
-                  itemCount: events.length,
+              return Expanded(
+                child: ListView.builder(
+                  itemCount: filteredEvents.length,
                   itemBuilder: (context, index) {
-                    final event = events[index];
+                    final event = filteredEvents[index];
                     final eventId = event.id;
                     final eventData = event.data() as Map<String, dynamic>;
                     final eventName = eventData['name'];
@@ -164,15 +178,11 @@ class EventPage extends StatelessWidget {
                       ),
                     );
                   },
-                );
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: signOut,
-            child: Text('Sign Out'),
-          ),
-        ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
