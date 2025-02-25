@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() => runApp(const MyApp());
 
@@ -82,9 +84,7 @@ class MyCustomFormState extends State<MyCustomForm> {
               onPressed: () {
                 // Validate returns true if the form is valid, or false otherwise.
                 if (_formKey.currentState!.validate()) {
-                  //print text that says submitted
-                  // If the form is valid, display a snackbar. In the real world,
-                  // you'd often call a server or save the information in a database.
+                  // If form is valid, then it will display a snackbar. 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Submitted')),
                   );
