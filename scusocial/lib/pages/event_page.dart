@@ -385,6 +385,8 @@ class EventPage extends StatelessWidget {
                         selectedDate!,
                         formattedTime,
                         userId,
+                        selectedVisibility,
+                        selectedGroup ?? '',
                       );
                       Navigator.pop(context);
                     } else {
