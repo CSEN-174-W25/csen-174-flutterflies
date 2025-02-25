@@ -11,14 +11,24 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   final AuthService _authService = AuthService();
   User? _user;
+  bool _isSigningIn = false;
 
   Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isSigningIn = true;
+    });
+
     final user = await _authService.signInWithGoogle();
+
     if (user != null) {
       setState(() {
         _user = user;
       });
     }
+
+    setState(() {
+      _isSigningIn = false;
+    });
   }
 
   Future<void> _signOut() async {
@@ -34,10 +44,12 @@ class _SignInPageState extends State<SignInPage> {
       appBar: AppBar(title: Text('Herd')),
       body: Center(
         child: _user == null
-            ? ElevatedButton(
-                onPressed: _signInWithGoogle,
-                child: Text('Sign in with Google'),
-              )
+            ? _isSigningIn
+                ? CircularProgressIndicator() // Show spinner while signing in
+                : ElevatedButton(
+                    onPressed: _signInWithGoogle,
+                    child: Text('Sign in with Google'),
+                  )
             : EventPage(
                 user: _user!,
                 signOut: _signOut,
