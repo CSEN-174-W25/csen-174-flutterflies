@@ -124,4 +124,16 @@ class FriendRepository {
       return e.toString();
     }
   }
+
+  // get list of friends
+  Stream<List<String>> getFriends({required String userId}) {
+    return firestore
+        .collection(FirebaseCollectionNames.users)
+        .doc(_myUid)
+        .snapshots()
+        .map((snapshot) {
+      final data = snapshot.data() as Map<String, dynamic>;
+      return List<String>.from(data[FirebaseFieldNames.friends]);
+    });
+  }
 }
