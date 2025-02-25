@@ -23,148 +23,161 @@ class EventPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Welcome, ${user.displayName}'),
-        leading: IconButton(
-          icon: Icon(Icons.calendar_today),
-          onPressed: () => _showCalendarSubscriptionLink(context),
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: Text('Welcome, ${user.displayName}'),
+      leading: IconButton(
+        icon: Icon(Icons.calendar_today),
+        onPressed: () => _showCalendarSubscriptionLink(context),
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.add),
+          onPressed: () => _createEvent(context, user.uid, _firestoreService),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => _createEvent(context, user.uid, _firestoreService),
-          ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SearchUserScreen(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.group),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ManageFriends(), // Make sure this is the correct class name
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('events').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
-                }
+        IconButton(
+          icon: Icon(Icons.search),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SearchUserScreen(),
+              ),
+            );
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.group),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ManageFriends(),
+              ),
+            );
+          },
+        ),
+      ],
+    ),
+    body: FutureBuilder<DocumentSnapshot>(
+      future: _firestore.collection('users').doc(user.uid).get(),
+      builder: (context, userSnapshot) {
+        if (!userSnapshot.hasData) {
+          return Center(child: CircularProgressIndicator());
+        }
 
-                final events = snapshot.data!.docs;
+        final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+        final List<String> friendsList = List<String>.from(userData?['friends'] ?? []);
 
-                return ListView.builder(
-                  itemCount: events.length,
-                  itemBuilder: (context, index) {
-                    final event = events[index];
-                    final eventId = event.id;
-                    final eventData = event.data() as Map<String, dynamic>;
-                    final eventName = eventData['name'];
-                    final eventDate = (eventData['date'] as Timestamp).toDate();
-                    final eventTime = eventData['time'];
-                    final eventDescription = eventData['description'];
-                    final eventLocation = eventData['location'];
-                    final acceptedUsers =
-                        List<String>.from(eventData['accepted'] ?? []);
-                    final eventCreatorId = eventData['creatorId'];
+        return StreamBuilder<QuerySnapshot>(
+          stream: _firestore.collection('events').snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return Center(child: CircularProgressIndicator());
+            }
 
-                    return Card(
-                      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              eventName,
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 4),
-                            Text('Date: ${eventDate.toLocal()}'),
-                            Text('Time: $eventTime'),
-                            SizedBox(height: 8),
-                            Text('Location: $eventLocation'),
-                            SizedBox(height: 8),
-                            Text('Description: $eventDescription'),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('${acceptedUsers.length} accepted'),
-                                Row(
-                                  children: [
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          _respondToEvent(eventId, true),
-                                      child: Text('Accept'),
-                                    ),
-                                    SizedBox(width: 8),
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          _respondToEvent(eventId, false),
-                                      child: Text('Decline'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (user.uid == eventCreatorId)
-                                  IconButton(
-                                    icon: Icon(Icons.delete),
-                                    onPressed: () =>
-                                        _deleteEvent(eventId, context),
-                                    color: Colors.red,
+            final events = snapshot.data!.docs;
+
+            final filteredEvents = events.where((event) {
+              final eventData = event.data() as Map<String, dynamic>;
+              final String visibility = eventData['visibility'] ?? 'Public';
+              final String creatorId = eventData['creatorId'];
+
+              if (visibility == 'Public') return true;
+              if (visibility == 'Visible to all friends' && friendsList.contains(creatorId)) {
+                return true;
+              }
+              if (visibility == 'Visible to a particular group') {
+                return true; // Treat as public for now
+              }
+              return false;
+            }).toList();
+
+            return Expanded(
+              child: ListView.builder(
+                itemCount: filteredEvents.length,
+                itemBuilder: (context, index) {
+                  final event = filteredEvents[index];
+                  final eventId = event.id;
+                  final eventData = event.data() as Map<String, dynamic>;
+                  final eventName = eventData['name'];
+                  final eventDate = (eventData['date'] as Timestamp).toDate();
+                  final eventTime = eventData['time'];
+                  final eventDescription = eventData['description'];
+                  final eventLocation = eventData['location'];
+                  final acceptedUsers = List<String>.from(eventData['accepted'] ?? []);
+                  final eventCreatorId = eventData['creatorId'];
+
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            eventName,
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 4),
+                          Text('Date: ${eventDate.toLocal()}'),
+                          Text('Time: $eventTime'),
+                          SizedBox(height: 8),
+                          Text('Location: $eventLocation'),
+                          SizedBox(height: 8),
+                          Text('Description: $eventDescription'),
+                          SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('${acceptedUsers.length} accepted'),
+                              Row(
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () => _respondToEvent(eventId, true),
+                                    child: Text('Accept'),
                                   ),
-                              ],
-                            ),
-                            SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: () =>
-                                  _goToEventDetailsPage(context, eventId),
-                              child: Text(
-                                'View Comments',
-                                style: TextStyle(color: Colors.blue),
+                                  SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () => _respondToEvent(eventId, false),
+                                    child: Text('Decline'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  ),
+                                ],
                               ),
+                              if (user.uid == eventCreatorId)
+                                IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () => _deleteEvent(eventId, context),
+                                  color: Colors.red,
+                                ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                          GestureDetector(
+                            onTap: () => _goToEventDetailsPage(context, eventId),
+                            child: Text(
+                              'View Comments',
+                              style: TextStyle(color: Colors.blue),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: signOut,
-            child: Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
-  }
+                    ),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    ),
+  );
+}
+
 
   void _showCalendarSubscriptionLink(BuildContext context) async {
     try {
