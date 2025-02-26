@@ -73,6 +73,28 @@ class EventPage extends StatelessWidget {
             },
           ),
           IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CreateGroupPage(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.search),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SearchGroupPage(),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: Icon(Icons.group),
             onPressed: () {
               Navigator.push(
@@ -189,29 +211,28 @@ class EventPage extends StatelessWidget {
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.red,
                                       ),
+
                                     ),
-                                  ],
-                                ),
-                                if (user.uid == eventCreatorId)
-                                  IconButton(
-                                    icon: Icon(Icons.delete),
-                                    onPressed: () =>
-                                        _deleteEvent(eventId, context),
-                                    color: Colors.red,
                                   ),
-                              ],
-                            ),
-                            SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: () =>
-                                  _goToEventDetailsPage(context, eventId),
-                              child: Text(
-                                'View Comments',
-                                style: TextStyle(color: Colors.blue),
+                                ],
                               ),
+                              if (user.uid == eventCreatorId)
+                                IconButton(
+                                  icon: Icon(Icons.delete),
+                                  onPressed: () => _deleteEvent(eventId, context),
+                                  color: Colors.red,
+                                ),
+                            ],
+                          ),
+                          SizedBox(height: 16),
+                          GestureDetector(
+                            onTap: () => _goToEventDetailsPage(context, eventId),
+                            child: Text(
+                              'View Comments',
+                              style: TextStyle(color: Colors.blue),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   },
