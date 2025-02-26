@@ -134,88 +134,98 @@ class EventPage extends StatelessWidget {
                 return false;
               }).toList();
 
-              return Expanded(
-                child: ListView.builder(
-                  itemCount: filteredEvents.length,
-                  itemBuilder: (context, index) {
-                    final event = filteredEvents[index];
-                    final eventId = event.id;
-                    final eventData = event.data() as Map<String, dynamic>;
-                    final eventName = eventData['name'];
-                    final eventDate = (eventData['date'] as Timestamp).toDate();
-                    final eventTime = eventData['time'];
-                    final eventDescription = eventData['description'];
-                    final eventLocation = eventData['location'];
-                    final acceptedUsers =
-                        List<String>.from(eventData['accepted'] ?? []);
-                    final eventCreatorId = eventData['creatorId'];
+              return Column(
+                // Ensure Expanded is inside a Column
+                children: [
+                  Expanded(
+                    // Wrap ListView in Expanded
+                    child: ListView.builder(
+                      itemCount: filteredEvents.length,
+                      itemBuilder: (context, index) {
+                        final event = filteredEvents[index];
+                        final eventId = event.id;
+                        final eventData = event.data() as Map<String, dynamic>;
+                        final eventName = eventData['name'];
+                        final eventDate =
+                            (eventData['date'] as Timestamp).toDate();
+                        final eventTime = eventData['time'];
+                        final eventDescription = eventData['description'];
+                        final eventLocation = eventData['location'];
+                        final acceptedUsers =
+                            List<String>.from(eventData['accepted'] ?? []);
+                        final eventCreatorId = eventData['creatorId'];
 
-                    return Card(
-                      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              eventName,
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 4),
-                            Text('Date: ${eventDate.toLocal()}'),
-                            Text('Time: $eventTime'),
-                            SizedBox(height: 8),
-                            Text('Location: $eventLocation'),
-                            SizedBox(height: 8),
-                            Text('Description: $eventDescription'),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        return Card(
+                          margin:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('${acceptedUsers.length} accepted'),
+                                Text(
+                                  eventName,
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 4),
+                                Text('Date: ${eventDate.toLocal()}'),
+                                Text('Time: $eventTime'),
+                                SizedBox(height: 8),
+                                Text('Location: $eventLocation'),
+                                SizedBox(height: 8),
+                                Text('Description: $eventDescription'),
+                                SizedBox(height: 8),
                                 Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          _respondToEvent(eventId, true),
-                                      child: Text('Accept'),
+                                    Text('${acceptedUsers.length} accepted'),
+                                    Row(
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              _respondToEvent(eventId, true),
+                                          child: Text('Accept'),
+                                        ),
+                                        SizedBox(width: 8),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              _respondToEvent(eventId, false),
+                                          child: Text('Decline'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(width: 8),
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          _respondToEvent(eventId, false),
-                                      child: Text('Decline'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
+                                    if (user.uid == eventCreatorId)
+                                      IconButton(
+                                        icon: Icon(Icons.delete),
+                                        onPressed: () =>
+                                            _deleteEvent(eventId, context),
+                                        color: Colors.red,
                                       ),
-                                    ),
                                   ],
                                 ),
-                                if (user.uid == eventCreatorId)
-                                  IconButton(
-                                    icon: Icon(Icons.delete),
-                                    onPressed: () =>
-                                        _deleteEvent(eventId, context),
-                                    color: Colors.red,
+                                SizedBox(height: 16),
+                                GestureDetector(
+                                  onTap: () =>
+                                      _goToEventDetailsPage(context, eventId),
+                                  child: Text(
+                                    'View Comments',
+                                    style: TextStyle(color: Colors.blue),
                                   ),
+                                ),
                               ],
                             ),
-                            SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: () =>
-                                  _goToEventDetailsPage(context, eventId),
-                              child: Text(
-                                'View Comments',
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           );
