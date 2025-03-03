@@ -20,6 +20,9 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context); // Get the theme
+    final colors = theme.colorScheme; // Get color scheme
+
     final eventName = eventData['name'] ?? 'No Title';
     final eventDate =
         (eventData['date'] as Timestamp?)?.toDate() ?? DateTime.now();
@@ -30,37 +33,53 @@ class EventCard extends StatelessWidget {
     final bool isAccepted = acceptedUsers.contains(user.uid);
 
     return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      elevation: 5,
+      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: colors.surface, // Use the correct theme color for card
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(eventName,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              eventName,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: colors.onSecondary, // Use text color from theme
+              ),
+            ),
             const SizedBox(height: 4),
-            Text('📅 ${eventDate.toLocal()} | ⏰ $eventTime'),
+            Text(
+              '📅 ${eventDate.toLocal()} | ⏰ $eventTime',
+              style: TextStyle(color: colors.onSecondary),
+            ),
             const SizedBox(height: 8),
-            Text('📍 $eventLocation',
-                style: TextStyle(color: Colors.grey[700])),
-            const SizedBox(height: 8),
+            Text(
+              '📍 $eventLocation',
+              style: TextStyle(color: colors.onSecondary.withOpacity(0.8)),
+            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('👥 ${acceptedUsers.length} Accepted',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(
+                  '👥 ${acceptedUsers.length} Accepted',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, color: colors.onPrimary),
+                ),
                 Row(
                   children: [
                     IconButton(
-                        icon: const Icon(Icons.comment, color: Colors.blue),
-                        onPressed: onViewDetails),
+                      icon: Icon(Icons.comment, color: colors.primary),
+                      onPressed: onViewDetails,
+                    ),
                     if (user.uid == eventData['creatorId'])
                       IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: onDelete),
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: onDelete,
+                      ),
                   ],
                 ),
               ],
@@ -71,18 +90,33 @@ class EventCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.check),
+                  icon: const Icon(Icons.check, color: Colors.white),
                   label: Text(isAccepted ? "Accepted" : "Accept"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isAccepted ? Colors.green : Colors.blue,
+                    backgroundColor:
+                        isAccepted ? colors.secondary : colors.primary,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                   onPressed:
                       isAccepted ? null : () => _respondToEvent(eventId, true),
                 ),
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, color: Colors.white),
                   label: const Text("Decline"),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.secondary,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
                   onPressed: () => _respondToEvent(eventId, false),
                 ),
               ],

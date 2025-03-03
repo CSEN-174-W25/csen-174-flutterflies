@@ -34,7 +34,8 @@ class EventPage extends StatelessWidget {
     return Scaffold(
       appBar: _buildAppBar(context),
       backgroundColor:
-          Colors.grey[200], // Light gray background for modern look
+          // use theme color for background
+          Theme.of(context).scaffoldBackgroundColor,
       body: _buildEventList(),
     );
   }
@@ -42,25 +43,25 @@ class EventPage extends StatelessWidget {
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       title: Text('Welcome, ${user.displayName ?? 'User'}'),
-      backgroundColor: Colors.blueAccent,
+      backgroundColor: Theme.of(context).primaryColor,
       elevation: 4.0,
       leading: IconButton(
-        icon: Icon(Icons.calendar_today, color: Colors.white),
+        icon: Icon(Icons.calendar_today, color: Theme.of(context).cardColor),
         onPressed: () => _showCalendarSubscriptionLink(context),
       ),
       actions: [
         IconButton(
-            icon: Icon(Icons.add, color: Colors.white),
+            icon: Icon(Icons.add, color: Theme.of(context).cardColor),
             onPressed: () =>
                 _createEvent(context, user.uid, _firestoreService)),
         IconButton(
-            icon: Icon(Icons.search, color: Colors.white),
+            icon: Icon(Icons.search, color: Theme.of(context).cardColor),
             onPressed: () => _navigateTo(context, const SearchUserScreen())),
         IconButton(
-            icon: Icon(Icons.group, color: Colors.white),
+            icon: Icon(Icons.group, color: Theme.of(context).cardColor),
             onPressed: () => _navigateTo(context, ManageFriends())),
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert, color: Colors.white),
+          icon: Icon(Icons.more_vert, color: Theme.of(context).cardColor),
           onSelected: (value) {
             if (value == 'sign_out') signOut();
           },
