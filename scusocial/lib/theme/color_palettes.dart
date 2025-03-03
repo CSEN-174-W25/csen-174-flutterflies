@@ -69,8 +69,8 @@ final List<Map<String, Color>> colorPalettes = [
     'accent': const Color(0xFFa7d5e1), // Light Blue
     'background': const Color(0xFFc2e2ea), // Light Blue
     'card': const Color(0xFFdceef3), // Light Blue
-    'textDark': const Color(0xFF000000), // Black
-    'textLight': const Color(0xFFFFFFFF), // White
+    'textDark': const Color.fromARGB(255, 0, 0, 0), // Black
+    'textLight': const Color.fromARGB(255, 0, 0, 0), // White
   },
 ];
 
