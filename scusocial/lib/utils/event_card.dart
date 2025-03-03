@@ -90,12 +90,12 @@ class EventCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.check, color: Colors.white),
+                  icon: Icon(Icons.check, color: colors.onSecondary),
                   label: Text(isAccepted ? "Accepted" : "Accept"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor:
                         isAccepted ? colors.secondary : colors.primary,
-                    foregroundColor: Colors.black,
+                    foregroundColor: colors.onSecondary,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 10),
                     shape: RoundedRectangleBorder(
@@ -106,11 +106,11 @@ class EventCard extends StatelessWidget {
                       isAccepted ? null : () => _respondToEvent(eventId, true),
                 ),
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.close, color: Colors.white),
+                  icon: Icon(Icons.close, color: colors.onSecondary),
                   label: const Text("Decline"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colors.secondary,
-                    foregroundColor: Colors.black,
+                    foregroundColor: colors.onSecondary,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 10),
                     shape: RoundedRectangleBorder(

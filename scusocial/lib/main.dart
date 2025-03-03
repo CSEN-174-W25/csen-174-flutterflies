@@ -25,21 +25,21 @@ class MyApp extends StatelessWidget {
           secondary: colors['secondary']!,
           surface: colors['card']!,
           background: colors['background']!,
-          onPrimary: Colors.white, // Text/icons on primary color
-          onSecondary: Colors.black, // Text/icons on secondary color
+          onPrimary: colors['textDark']!, // Text/icons on primary color
+          onSecondary: colors['textLight']!, // Text/icons on secondary color
         ),
         scaffoldBackgroundColor: colors['background'],
         cardColor: colors['card'],
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: colors['accent'],
-            foregroundColor: Colors.black,
+            foregroundColor: colors['textLight'],
           ),
         ),
         appBarTheme: AppBarTheme(
           backgroundColor: colors['primary'],
-          titleTextStyle: const TextStyle(color: Colors.white, fontSize: 20),
-          iconTheme: const IconThemeData(color: Colors.white),
+          titleTextStyle: TextStyle(color: colors['textLight'], fontSize: 20),
+          iconTheme: IconThemeData(color: colors['textLight']),
         ),
       ),
       home: SignInPage(),

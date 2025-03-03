@@ -32,7 +32,7 @@ class ProfileScreen extends ConsumerWidget {
               },
             ),
           ),
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: SafeArea(
             child: Center(
               child: Padding(
