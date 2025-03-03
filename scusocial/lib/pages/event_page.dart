@@ -11,227 +11,123 @@ import '../pages/manage_friends.dart';
 import 'group/create_group.dart';
 import 'group/search_group.dart';
 
+import '../utils/event_card.dart';
+
 class EventPage extends StatelessWidget {
   final User user;
   final Future<void> Function() signOut;
   final bool eventIsTesting;
-  late final FirestoreService _firestoreService;
+  final FirestoreService _firestoreService;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   EventPage({
     required this.user,
     required this.signOut,
     required this.eventIsTesting,
-  }) {
-    _firestoreService = FirestoreService(firestore: _firestore);
-  }
+    Key? key,
+  })  : _firestoreService =
+            FirestoreService(firestore: FirebaseFirestore.instance),
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Welcome, ${user.displayName}'),
-        leading: IconButton(
-          icon: Icon(Icons.calendar_today),
-          onPressed: () => _showCalendarSubscriptionLink(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => _createEvent(context, user.uid, _firestoreService),
-          ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SearchUserScreen(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CreateGroupPage(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SearchGroupPage(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.group),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ManageFriends(),
-                ),
-              );
-            },
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'sign_out') {
-                signOut();
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'sign_out',
-                child: Text('Sign Out'),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: _firestore.collection('users').doc(user.uid).get(),
-        builder: (context, userSnapshot) {
-          if (!userSnapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
-
-          final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
-          final List<String> friendsList =
-              List<String>.from(userData?['friends'] ?? []);
-
-          return StreamBuilder<QuerySnapshot>(
-            stream: _firestore.collection('events').snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return Center(child: CircularProgressIndicator());
-              }
-
-              final events = snapshot.data!.docs;
-
-              final filteredEvents = events.where((event) {
-                final eventData = event.data() as Map<String, dynamic>;
-                final String visibility = eventData['visibility'] ?? 'Public';
-                final String creatorId = eventData['creatorId'];
-
-                if (visibility == 'Public') return true;
-                if (visibility == 'Visible to all friends' &&
-                    friendsList.contains(creatorId)) {
-                  return true;
-                }
-                if (visibility == 'Visible to a particular group') {
-                  return true; // Treat as public for now
-                }
-                return false;
-              }).toList();
-
-              return Column(
-                // Ensure Expanded is inside a Column
-                children: [
-                  Expanded(
-                    // Wrap ListView in Expanded
-                    child: ListView.builder(
-                      itemCount: filteredEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = filteredEvents[index];
-                        final eventId = event.id;
-                        final eventData = event.data() as Map<String, dynamic>;
-                        final eventName = eventData['name'];
-                        final eventDate =
-                            (eventData['date'] as Timestamp).toDate();
-                        final eventTime = eventData['time'];
-                        final eventDescription = eventData['description'];
-                        final eventLocation = eventData['location'];
-                        final acceptedUsers =
-                            List<String>.from(eventData['accepted'] ?? []);
-                        final eventCreatorId = eventData['creatorId'];
-
-                        return Card(
-                          margin:
-                              EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  eventName,
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                SizedBox(height: 4),
-                                Text('Date: ${eventDate.toLocal()}'),
-                                Text('Time: $eventTime'),
-                                SizedBox(height: 8),
-                                Text('Location: $eventLocation'),
-                                SizedBox(height: 8),
-                                Text('Description: $eventDescription'),
-                                SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('${acceptedUsers.length} accepted'),
-                                    Row(
-                                      children: [
-                                        ElevatedButton(
-                                          onPressed: () =>
-                                              _respondToEvent(eventId, true),
-                                          child: Text('Accept'),
-                                        ),
-                                        SizedBox(width: 8),
-                                        ElevatedButton(
-                                          onPressed: () =>
-                                              _respondToEvent(eventId, false),
-                                          child: Text('Decline'),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (user.uid == eventCreatorId)
-                                      IconButton(
-                                        icon: Icon(Icons.delete),
-                                        onPressed: () =>
-                                            _deleteEvent(eventId, context),
-                                        color: Colors.red,
-                                      ),
-                                  ],
-                                ),
-                                SizedBox(height: 16),
-                                GestureDetector(
-                                  onTap: () =>
-                                      _goToEventDetailsPage(context, eventId),
-                                  child: Text(
-                                    'View Comments',
-                                    style: TextStyle(color: Colors.blue),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      ),
+      appBar: _buildAppBar(context),
+      backgroundColor:
+          Colors.grey[200], // Light gray background for modern look
+      body: _buildEventList(),
     );
+  }
+
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      title: Text('Welcome, ${user.displayName ?? 'User'}'),
+      backgroundColor: Colors.blueAccent,
+      elevation: 4.0,
+      leading: IconButton(
+        icon: Icon(Icons.calendar_today, color: Colors.white),
+        onPressed: () => _showCalendarSubscriptionLink(context),
+      ),
+      actions: [
+        IconButton(
+            icon: Icon(Icons.add, color: Colors.white),
+            onPressed: () =>
+                _createEvent(context, user.uid, _firestoreService)),
+        IconButton(
+            icon: Icon(Icons.search, color: Colors.white),
+            onPressed: () => _navigateTo(context, const SearchUserScreen())),
+        IconButton(
+            icon: Icon(Icons.group, color: Colors.white),
+            onPressed: () => _navigateTo(context, ManageFriends())),
+        PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert, color: Colors.white),
+          onSelected: (value) {
+            if (value == 'sign_out') signOut();
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(value: 'sign_out', child: Text('Sign Out')),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEventList() {
+    return FutureBuilder<DocumentSnapshot>(
+      future:
+          FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
+      builder: (context, userSnapshot) {
+        if (!userSnapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+        final List<String> friendsList =
+            List<String>.from(userData?['friends'] ?? []);
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('events').snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final events = snapshot.data!.docs;
+            final filteredEvents = events.where((event) {
+              final eventData = event.data() as Map<String, dynamic>;
+              final String visibility = eventData['visibility'] ?? 'Public';
+              final String creatorId = eventData['creatorId'];
+
+              if (visibility == 'Public' ||
+                  (visibility == 'Visible to all friends' &&
+                      friendsList.contains(creatorId))) {
+                return true;
+              }
+              return false;
+            }).toList();
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: filteredEvents.length,
+              itemBuilder: (context, index) {
+                final event = filteredEvents[index];
+                return EventCard(
+                  eventId: event.id,
+                  eventData: event.data() as Map<String, dynamic>,
+                  user: user,
+                  onDelete: () => _deleteEvent(event.id, context),
+                  onViewDetails: () => _goToEventDetailsPage(context, event.id),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _navigateTo(BuildContext context, Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
   }
 
   void _showCalendarSubscriptionLink(BuildContext context) async {
@@ -671,21 +567,6 @@ class __CommentSectionState extends State<_CommentSection> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class ManageFriendsScreen extends StatelessWidget {
-  const ManageFriendsScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Friends'),
-      ),
-      body: const Center(
-        child: Text('Manage your friends here!'),
-      ),
     );
   }
 }
