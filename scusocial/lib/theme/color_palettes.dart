@@ -75,7 +75,7 @@ final List<Map<String, Color>> colorPalettes = [
 ];
 
 // Manually select a theme here
-const int selectedThemeIndex = 0; // Change this to 1 or 2 for different themes
+const int selectedThemeIndex = 6; // Change this to 1 or 2 for different themes
 
 // Get selected theme based on the index
 Map<String, Color> getSelectedPalette() {
