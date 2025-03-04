@@ -160,6 +160,22 @@ class EventPage extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               itemCount: filteredEvents.length,
               itemBuilder: (context, index) {
+                // Sort events by soonest expiring first
+                filteredEvents.sort((a, b) {
+                  final aData = a.data() as Map<String, dynamic>;
+                  final bData = b.data() as Map<String, dynamic>;
+
+                  final aDate = (aData['date'] as Timestamp).toDate();
+                  final aTime = aData['time'] as String;
+                  final aFullDateTime = _parseEventTime(aDate, aTime);
+
+                  final bDate = (bData['date'] as Timestamp).toDate();
+                  final bTime = bData['time'] as String;
+                  final bFullDateTime = _parseEventTime(bDate, bTime);
+
+                  return aFullDateTime.compareTo(bFullDateTime);
+                });
+
                 final event = filteredEvents[index];
                 return EventCard(
                   eventId: event.id,
