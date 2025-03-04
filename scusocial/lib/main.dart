@@ -42,6 +42,7 @@ class MyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: colors['textLight']),
         ),
       ),
+      debugShowCheckedModeBanner: false,
       home: SignInPage(),
     );
   }
