@@ -58,6 +58,14 @@ class EventPage extends StatelessWidget {
             icon: Icon(Icons.search, color: Theme.of(context).cardColor),
             onPressed: () => _navigateTo(context, const SearchUserScreen())),
         IconButton(
+          icon: Icon(Icons.group_add, color: Theme.of(context).cardColor),
+          onPressed: () => _navigateTo(context, CreateGroupPage()),
+        ),
+        IconButton(
+          icon: Icon(Icons.groups, color: Theme.of(context).cardColor),
+          onPressed: () => _navigateTo(context, SearchGroupPage()),
+        ),
+        IconButton(
             icon: Icon(Icons.group, color: Theme.of(context).cardColor),
             onPressed: () => _navigateTo(context, ManageFriends())),
         PopupMenuButton<String>(
