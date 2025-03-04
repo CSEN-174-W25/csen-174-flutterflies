@@ -8,9 +8,7 @@ import '../services/calendar_service.dart';
 import '../features/friends/search_user_screen.dart';
 import '../services/firestore_service.dart';
 import '../pages/manage_friends.dart';
-import 'group/create_group.dart';
-import 'group/search_group.dart';
-
+import 'group/group_page.dart';
 class EventPage extends StatelessWidget {
   final User user;
   final Future<void> Function() signOut;
@@ -51,37 +49,28 @@ class EventPage extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CreateGroupPage(),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SearchGroupPage(),
-                ),
-              );
-            },
-          ),
-          IconButton(
             icon: Icon(Icons.group),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ManageFriends(),
+                  builder: (context) =>
+                      ManageFriends(), // Make sure this is the correct class name
                 ),
               );
             },
+          ),
+          IconButton (
+            icon: Icon(Icons.group_add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+
+                  builder: (context) => GroupPage(),
+                ),
+              );
+            }
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
