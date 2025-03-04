@@ -6,14 +6,14 @@ class UserModel {
   final String uid;
   final List<String> friends;
   //final String email;
-  //final String displayName;
+  final String fullName;
   final String? bio;
 
   const UserModel({
     required this.uid,
     required this.friends,
     //required this.email,
-    //required this.displayName,
+    required this.fullName,
     required this.bio,
 
   });
@@ -23,6 +23,7 @@ class UserModel {
       FirebaseFieldNames.uid: uid,
       FirebaseFieldNames.friends: friends,
       //FirebaseFieldNames.email: email,
+      FirebaseFieldNames.fullName: fullName,
       FirebaseFieldNames.bio: bio,
     };
   }
@@ -32,7 +33,7 @@ class UserModel {
       uid: map[FirebaseFieldNames.uid] as String,
       friends: List<String>.from(map[FirebaseFieldNames.friends] ?? []),
       //email: map[FirebaseFieldNames.email] as String,
-      //displayName: map[FirebaseFieldNames.displayName] as String,
+      fullName: map[FirebaseFieldNames.fullName] as String,
       bio: map[FirebaseFieldNames.bio] as String?,
 
     );
