@@ -156,15 +156,23 @@ Widget _buildEventList() {
                 final eventTime = eventData['time'] as String;
                 final fullEventDateTime = _parseEventTime(eventDate, eventTime);
 
+                // Only show events in the future
                 if (fullEventDateTime.isBefore(now)) return false;
+
+                // Public events should always be shown
                 if (visibility == 'Public') return true;
+
+                // Friend events: Show if the creator is a friend OR if the current user is the creator
                 if (visibility == 'Visible to all friends' &&
-                    friendsList.contains(creatorId)) {
+                    (friendsList.contains(creatorId) || creatorId == user.uid)) {
                   return true;
                 }
+
+                // Show group-restricted events if the user is part of the group
                 if (visibility == 'Visible to a particular group') {
                   return groupName != null && userGroups.contains(groupName);
                 }
+
                 return false;
               }).toList();
 
@@ -172,6 +180,22 @@ Widget _buildEventList() {
                 padding: const EdgeInsets.all(12),
                 itemCount: filteredEvents.length,
                 itemBuilder: (context, index) {
+
+                  filteredEvents.sort((a, b) {
+                  final aData = a.data() as Map<String, dynamic>;
+                  final bData = b.data() as Map<String, dynamic>;
+
+                  final aDate = (aData['date'] as Timestamp).toDate();
+                  final aTime = aData['time'] as String;
+                  final aFullDateTime = _parseEventTime(aDate, aTime);
+
+                  final bDate = (bData['date'] as Timestamp).toDate();
+                  final bTime = bData['time'] as String;
+                  final bFullDateTime = _parseEventTime(bDate, bTime);
+
+                  return aFullDateTime.compareTo(bFullDateTime);
+                });
+
                   final event = filteredEvents[index];
                   return EventCard(
                     eventId: event.id,
@@ -190,6 +214,7 @@ Widget _buildEventList() {
     },
   );
 }
+
 
 
   void _navigateTo(BuildContext context, Widget page) {
