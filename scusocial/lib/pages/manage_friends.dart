@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/friends/friend-repo.dart';
 import '../core/constants/firebase_constants.dart';
 import '../features/friends/get_user_info_by_id_provider.dart';
+import '../features/friends/search_user_screen.dart';
 
 class ManageFriends extends StatefulWidget {
   @override
@@ -62,7 +63,23 @@ class _ManageFriendsState extends State<ManageFriends> {
     String myUid = FirebaseAuth.instance.currentUser!.uid;
     //final userInfo = ref.watch(getUserInfoByIdProvider(myUid));
     return Scaffold(
-      appBar: AppBar(title: Text('Manage Friends')),
+      appBar: AppBar(
+        title: Row(
+          children: [
+            IconButton(
+              icon: Icon(Icons.search, color: Theme.of(context).cardColor),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchUserScreen(),
+                ),
+              ),
+            ),
+            SizedBox(width: 8),
+            Text('Manage Friends'),
+          ],
+        ),
+      ),
       body: Column(
         children: [
           Padding(

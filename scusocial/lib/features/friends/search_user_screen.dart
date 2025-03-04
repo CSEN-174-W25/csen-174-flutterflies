@@ -15,7 +15,6 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
 
-
   // Inject Firebase instances into FriendRepository
   late final FriendRepository _friendRepo;
 
@@ -28,8 +27,17 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
     );
   }
 
-  // Function to search users by `fullName`
+  // Function to capitalize each word in the search query to match stored format
+  String _capitalizeName(String name) {
+    return name
+        .split(' ') // Split into words
+        .map((word) => word.isNotEmpty
+            ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
+            : '')
+        .join(' '); // Capitalize first letter of each word and join
+  }
 
+  // Function to search users by `fullName`
   void _searchUsers(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -43,11 +51,13 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
     });
 
     try {
-      // Query Firestore for users whose fullName matches or starts with the search input
+      // Format query to match stored capitalization format
+      String formattedQuery = _capitalizeName(query);
+
       final snapshot = await FirebaseFirestore.instance
           .collection('users')
-          .where('fullName', isGreaterThanOrEqualTo: query)
-          .where('fullName', isLessThanOrEqualTo: query + '\uf8ff')
+          .where('fullName', isGreaterThanOrEqualTo: formattedQuery)
+          .where('fullName', isLessThanOrEqualTo: formattedQuery + '\uf8ff')
           .get();
 
       setState(() {

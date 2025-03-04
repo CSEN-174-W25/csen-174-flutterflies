@@ -11,14 +11,24 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   final AuthService _authService = AuthService();
   User? _user;
+  bool _isSigningIn = false;
 
   Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isSigningIn = true;
+    });
+
     final user = await _authService.signInWithGoogle();
+
     if (user != null) {
       setState(() {
         _user = user;
       });
     }
+
+    setState(() {
+      _isSigningIn = false;
+    });
   }
 
   Future<void> _signOut() async {
@@ -31,13 +41,31 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Herd')),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(100), // Set AppBar height
+        child: AppBar(
+          centerTitle: true,
+          flexibleSpace: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center, // Centers the logo properly
+            children: [
+              SizedBox(height: 0), // Adjust spacing as needed
+              Image.asset(
+                'assets/herdlogo.png',
+                height: 100, // Adjust size separately
+              ),
+            ],
+          ),
+        ),
+      ),
       body: Center(
         child: _user == null
-            ? ElevatedButton(
-                onPressed: _signInWithGoogle,
-                child: Text('Sign in with Google'),
-              )
+            ? _isSigningIn
+                ? CircularProgressIndicator() // Show spinner while signing in
+                : ElevatedButton(
+                    onPressed: _signInWithGoogle,
+                    child: Text('Sign in with Google'),
+                  )
             : EventPage(
                 user: _user!,
                 signOut: _signOut,
