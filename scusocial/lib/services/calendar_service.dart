@@ -11,7 +11,7 @@ class CalendarService {
 
   Future<CalendarApi> _getCalendarApi() async {
     final credentialsJson =
-        await rootBundle.loadString('lib/utils/herd-aad12-6627b3250dc9.json');
+        await rootBundle.loadString('/Users/leila/Documents/secrets/herd-aad12-6627b3250dc9.json');
     final credentials =
         auth.ServiceAccountCredentials.fromJson(credentialsJson);
     final client = await auth.clientViaServiceAccount(credentials, _scopes);
