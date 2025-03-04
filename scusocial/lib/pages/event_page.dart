@@ -16,7 +16,6 @@ import 'group/search_group.dart';
 
 import '../utils/event_card.dart';
 
-
 class EventPage extends StatelessWidget {
   final User user;
   final Future<void> Function() signOut;
@@ -39,7 +38,6 @@ class EventPage extends StatelessWidget {
     _cleanupPastEvents();
 
     return Scaffold(
-
       appBar: _buildAppBar(context),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _buildEventList(),
@@ -74,7 +72,6 @@ class EventPage extends StatelessWidget {
     }
   }
 
-
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       title: Text('Welcome, ${user.displayName ?? 'User'}'),
@@ -90,18 +87,13 @@ class EventPage extends StatelessWidget {
             onPressed: () =>
                 _createEvent(context, user.uid, _firestoreService)),
         IconButton(
-          icon: Icon(Icons.group_add, color: Theme.of(context).cardColor),
-          onPressed: () => _navigateTo(context, CreateGroupPage()),
-        ),
-        IconButton(
           icon: Icon(Icons.person, color: Theme.of(context).cardColor),
           onPressed: () =>
               _navigateTo(context, ProfileScreen(userId: user.uid)),
         ),
         IconButton(
           icon: Icon(Icons.group_add, color: Theme.of(context).cardColor),
-          onPressed: () =>
-              _navigateTo(context, GroupPage()),
+          onPressed: () => _navigateTo(context, GroupPage()),
         ),
         IconButton(
           icon: Icon(Icons.groups, color: Theme.of(context).cardColor),
