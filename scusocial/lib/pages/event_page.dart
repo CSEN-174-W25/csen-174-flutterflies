@@ -31,13 +31,42 @@ class EventPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Call method to clean up past events on build
+    _cleanupPastEvents();
+
     return Scaffold(
       appBar: _buildAppBar(context),
-      backgroundColor:
-          // use theme color for background
-          Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _buildEventList(),
     );
+  }
+
+  void _cleanupPastEvents() async {
+    final now = DateTime.now();
+
+    try {
+      // Get all events created by the current user
+      final querySnapshot = await _firestore
+          .collection('events')
+          .where('creatorId', isEqualTo: user.uid)
+          .get();
+
+      for (var doc in querySnapshot.docs) {
+        final eventData = doc.data();
+        final eventDate = (eventData['date'] as Timestamp).toDate();
+        final eventTime = eventData['time'] as String;
+
+        // Combine date and time to get full event datetime
+        final fullEventDateTime = _parseEventTime(eventDate, eventTime);
+
+        // If the event is in the past, delete it
+        if (fullEventDateTime.isBefore(now)) {
+          await doc.reference.delete();
+        }
+      }
+    } catch (e) {
+      print('Error cleaning up past events: $e');
+    }
   }
 
   AppBar _buildAppBar(BuildContext context) {
@@ -54,9 +83,6 @@ class EventPage extends StatelessWidget {
             icon: Icon(Icons.add, color: Theme.of(context).cardColor),
             onPressed: () =>
                 _createEvent(context, user.uid, _firestoreService)),
-        // IconButton(
-        //     icon: Icon(Icons.search, color: Theme.of(context).cardColor),
-        //     onPressed: () => _navigateTo(context, const SearchUserScreen())),
         IconButton(
           icon: Icon(Icons.group_add, color: Theme.of(context).cardColor),
           onPressed: () => _navigateTo(context, CreateGroupPage()),
@@ -106,16 +132,26 @@ class EventPage extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
+            final now = DateTime.now();
             final events = snapshot.data!.docs;
             final filteredEvents = events.where((event) {
               final eventData = event.data() as Map<String, dynamic>;
               final String visibility = eventData['visibility'] ?? 'Public';
               final String creatorId = eventData['creatorId'];
 
-              if (visibility == 'Public' ||
-                  (visibility == 'Visible to all friends' &&
-                      friendsList.contains(creatorId))) {
-                return true;
+              // Parse event date and time
+              final eventDate = (eventData['date'] as Timestamp).toDate();
+              final eventTime = eventData['time'] as String;
+              final fullEventDateTime = _parseEventTime(eventDate, eventTime);
+
+              // Only show future events
+              if (fullEventDateTime.isAfter(now)) {
+                // Check visibility conditions
+                if (visibility == 'Public' ||
+                    (visibility == 'Visible to all friends' &&
+                        friendsList.contains(creatorId))) {
+                  return true;
+                }
               }
               return false;
             }).toList();
