@@ -8,10 +8,14 @@ import '../services/calendar_service.dart';
 import '../features/friends/search_user_screen.dart';
 import '../services/firestore_service.dart';
 import '../pages/manage_friends.dart';
+
+import 'group/group_page.dart';
+
 import 'group/create_group.dart';
 import 'group/search_group.dart';
 
 import '../utils/event_card.dart';
+
 
 class EventPage extends StatelessWidget {
   final User user;
@@ -35,6 +39,7 @@ class EventPage extends StatelessWidget {
     _cleanupPastEvents();
 
     return Scaffold(
+
       appBar: _buildAppBar(context),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _buildEventList(),
@@ -69,6 +74,7 @@ class EventPage extends StatelessWidget {
     }
   }
 
+
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       title: Text('Welcome, ${user.displayName ?? 'User'}'),
@@ -91,6 +97,11 @@ class EventPage extends StatelessWidget {
           icon: Icon(Icons.person, color: Theme.of(context).cardColor),
           onPressed: () =>
               _navigateTo(context, ProfileScreen(userId: user.uid)),
+        ),
+        IconButton(
+          icon: Icon(Icons.group_add, color: Theme.of(context).cardColor),
+          onPressed: () =>
+              _navigateTo(context, GroupPage()),
         ),
         IconButton(
           icon: Icon(Icons.groups, color: Theme.of(context).cardColor),
