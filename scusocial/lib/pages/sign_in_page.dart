@@ -41,7 +41,23 @@ class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Herd')),
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(100), // Set AppBar height
+        child: AppBar(
+          centerTitle: true,
+          flexibleSpace: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center, // Centers the logo properly
+            children: [
+              SizedBox(height: 0), // Adjust spacing as needed
+              Image.asset(
+                'assets/herdlogo.png',
+                height: 100, // Adjust size separately
+              ),
+            ],
+          ),
+        ),
+      ),
       body: Center(
         child: _user == null
             ? _isSigningIn
