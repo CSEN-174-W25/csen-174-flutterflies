@@ -96,10 +96,6 @@ class EventPage extends StatelessWidget {
           onPressed: () => _navigateTo(context, GroupPage()),
         ),
         IconButton(
-          icon: Icon(Icons.groups, color: Theme.of(context).cardColor),
-          onPressed: () => _navigateTo(context, SearchGroupPage()),
-        ),
-        IconButton(
             icon: Icon(Icons.group, color: Theme.of(context).cardColor),
             onPressed: () => _navigateTo(context, ManageFriends())),
         PopupMenuButton<String>(
