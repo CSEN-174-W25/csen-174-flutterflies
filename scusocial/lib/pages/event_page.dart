@@ -8,8 +8,6 @@ import '../services/calendar_service.dart';
 import '../features/friends/search_user_screen.dart';
 import '../services/firestore_service.dart';
 import '../pages/manage_friends.dart';
-import 'group/create_group.dart';
-import 'group/search_group.dart';
 import 'group/group_page.dart';
 class EventPage extends StatelessWidget {
   final User user;
@@ -73,7 +71,7 @@ class EventPage extends StatelessWidget {
                 ),
               );
             }
-          )
+          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'sign_out') {
