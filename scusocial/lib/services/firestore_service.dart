@@ -15,17 +15,21 @@ class FirestoreService {
     DateTime date,
     String time,
     String creatorId,
-  ) async {
-    await _firestore.collection('events').add({
-      'name': name,
-      'description': description,
-      'location': location,
-      'date': Timestamp.fromDate(date),
-      'time': time,
-      'creatorId': creatorId,
-      'accepted': [],
-    });
-  }
+    String selectedVisibility,
+    String selectedGroup, // Keep this as a normal string parameter
+) async {
+  await _firestore.collection('events').add({
+    'name': name,
+    'description': description,
+    'location': location,
+    'date': Timestamp.fromDate(date),
+    'time': time,
+    'creatorId': creatorId,
+    'visibility': selectedVisibility,
+    'group': selectedGroup.isNotEmpty ? selectedGroup : null, // Store null if empty
+    'accepted': [],
+  });
+}
 
   /// Searches for users in Firestore whose `fullName` starts with `query`
   Future<List<Map<String, dynamic>>> searchUsers(String query) async {

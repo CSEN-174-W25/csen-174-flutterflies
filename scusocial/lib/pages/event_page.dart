@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:scusocial/pages/profile_screen.dart';
 
 // import calendar servcie
 import '../services/calendar_service.dart';
@@ -67,114 +68,159 @@ class EventPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
+
                   builder: (context) => GroupPage(),
                 ),
               );
             }
           )
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'sign_out') {
+                signOut();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'sign_out',
+                child: Text('Sign Out'),
+              ),
+            ],
+          ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('events').snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
+      body: FutureBuilder<DocumentSnapshot>(
+        future: _firestore.collection('users').doc(user.uid).get(),
+        builder: (context, userSnapshot) {
+          if (!userSnapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
+          final List<String> friendsList =
+              List<String>.from(userData?['friends'] ?? []);
+
+          return StreamBuilder<QuerySnapshot>(
+            stream: _firestore.collection('events').snapshots(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              final events = snapshot.data!.docs;
+
+              final filteredEvents = events.where((event) {
+                final eventData = event.data() as Map<String, dynamic>;
+                final String visibility = eventData['visibility'] ?? 'Public';
+                final String creatorId = eventData['creatorId'];
+
+                if (visibility == 'Public') return true;
+                if (visibility == 'Visible to all friends' &&
+                    friendsList.contains(creatorId)) {
+                  return true;
                 }
+                if (visibility == 'Visible to a particular group') {
+                  return true; // Treat as public for now
+                }
+                return false;
+              }).toList();
 
-                final events = snapshot.data!.docs;
+              return Column(
+                // Ensure Expanded is inside a Column
+                children: [
+                  Expanded(
+                    // Wrap ListView in Expanded
+                    child: ListView.builder(
+                      itemCount: filteredEvents.length,
+                      itemBuilder: (context, index) {
+                        final event = filteredEvents[index];
+                        final eventId = event.id;
+                        final eventData = event.data() as Map<String, dynamic>;
+                        final eventName = eventData['name'];
+                        final eventDate =
+                            (eventData['date'] as Timestamp).toDate();
+                        final eventTime = eventData['time'];
+                        final eventDescription = eventData['description'];
+                        final eventLocation = eventData['location'];
+                        final acceptedUsers =
+                            List<String>.from(eventData['accepted'] ?? []);
+                        final eventCreatorId = eventData['creatorId'];
 
-                return ListView.builder(
-                  itemCount: events.length,
-                  itemBuilder: (context, index) {
-                    final event = events[index];
-                    final eventId = event.id;
-                    final eventData = event.data() as Map<String, dynamic>;
-                    final eventName = eventData['name'];
-                    final eventDate = (eventData['date'] as Timestamp).toDate();
-                    final eventTime = eventData['time'];
-                    final eventDescription = eventData['description'];
-                    final eventLocation = eventData['location'];
-                    final acceptedUsers =
-                        List<String>.from(eventData['accepted'] ?? []);
-                    final eventCreatorId = eventData['creatorId'];
-
-                    return Card(
-                      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              eventName,
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(height: 4),
-                            Text('Date: ${eventDate.toLocal()}'),
-                            Text('Time: $eventTime'),
-                            SizedBox(height: 8),
-                            Text('Location: $eventLocation'),
-                            SizedBox(height: 8),
-                            Text('Description: $eventDescription'),
-                            SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        return Card(
+                          margin:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('${acceptedUsers.length} accepted'),
+                                Text(
+                                  eventName,
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 4),
+                                Text('Date: ${eventDate.toLocal()}'),
+                                Text('Time: $eventTime'),
+                                SizedBox(height: 8),
+                                Text('Location: $eventLocation'),
+                                SizedBox(height: 8),
+                                Text('Description: $eventDescription'),
+                                SizedBox(height: 8),
                                 Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          _respondToEvent(eventId, true),
-                                      child: Text('Accept'),
+                                    Text('${acceptedUsers.length} accepted'),
+                                    Row(
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              _respondToEvent(eventId, true),
+                                          child: Text('Accept'),
+                                        ),
+                                        SizedBox(width: 8),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              _respondToEvent(eventId, false),
+                                          child: Text('Decline'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    SizedBox(width: 8),
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          _respondToEvent(eventId, false),
-                                      child: Text('Decline'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
+                                    if (user.uid == eventCreatorId)
+                                      IconButton(
+                                        icon: Icon(Icons.delete),
+                                        onPressed: () =>
+                                            _deleteEvent(eventId, context),
+                                        color: Colors.red,
                                       ),
-                                    ),
                                   ],
                                 ),
-                                if (user.uid == eventCreatorId)
-                                  IconButton(
-                                    icon: Icon(Icons.delete),
-                                    onPressed: () =>
-                                        _deleteEvent(eventId, context),
-                                    color: Colors.red,
+                                SizedBox(height: 16),
+                                GestureDetector(
+                                  onTap: () =>
+                                      _goToEventDetailsPage(context, eventId),
+                                  child: Text(
+                                    'View Comments',
+                                    style: TextStyle(color: Colors.blue),
                                   ),
+                                ),
                               ],
                             ),
-                            SizedBox(height: 16),
-                            GestureDetector(
-                              onTap: () =>
-                                  _goToEventDetailsPage(context, eventId),
-                              child: Text(
-                                'View Comments',
-                                style: TextStyle(color: Colors.blue),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          ElevatedButton(
-            onPressed: signOut,
-            child: Text('Sign Out'),
-          ),
-        ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -240,6 +286,13 @@ class EventPage extends StatelessWidget {
             TextEditingController();
         DateTime? selectedDate;
         TimeOfDay? selectedTime;
+        String selectedVisibility = 'Public';
+        final List<String> visibilityOptions = [
+          'Public',
+          'Visible to all friends',
+          'Visible to a particular group'
+        ];
+        String? selectedGroup; // For specific group selection
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -302,6 +355,32 @@ class EventPage extends StatelessWidget {
                         }
                       },
                     ),
+
+                    // Visibility Dropdown
+                    DropdownButton<String>(
+                      value: selectedVisibility,
+                      onChanged: (newValue) {
+                        setState(() {
+                          selectedVisibility = newValue!;
+                        });
+                      },
+                      items: visibilityOptions.map((String option) {
+                        return DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(option),
+                        );
+                      }).toList(),
+                    ),
+
+                    // Group Selection (only if "Visible to a particular group" is chosen)
+                    if (selectedVisibility == 'Visible to a particular group')
+                      TextField(
+                        decoration:
+                            InputDecoration(labelText: 'Enter Group Name'),
+                        onChanged: (value) {
+                          selectedGroup = value;
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -316,7 +395,10 @@ class EventPage extends StatelessWidget {
                         descriptionController.text.isNotEmpty &&
                         locationController.text.isNotEmpty &&
                         selectedDate != null &&
-                        selectedTime != null) {
+                        selectedTime != null &&
+                        (selectedVisibility !=
+                                'Visible to a particular group' ||
+                            selectedGroup != null)) {
                       // Convert TimeOfDay to a string format
                       final formattedTime = selectedTime!.format(context);
 
@@ -327,6 +409,8 @@ class EventPage extends StatelessWidget {
                         selectedDate!,
                         formattedTime,
                         userId,
+                        selectedVisibility,
+                        selectedGroup ?? '',
                       );
                       Navigator.pop(context);
                     } else {
@@ -578,26 +662,6 @@ class __CommentSectionState extends State<_CommentSection> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class ProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SearchUserScreen()),
-            );
-          },
-          child: const Text('Search Users'),
-        ),
-      ),
     );
   }
 }
