@@ -5,16 +5,25 @@ import 'package:flutter/foundation.dart' show immutable;
 class UserModel {
   final String uid;
   final List<String> friends;
+  //final String email;
+  //final String displayName;
+  final String? bio;
 
   const UserModel({
     required this.uid,
     required this.friends,
+    //required this.email,
+    //required this.displayName,
+    required this.bio,
+
   });
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
       FirebaseFieldNames.uid: uid,
       FirebaseFieldNames.friends: friends,
+      //FirebaseFieldNames.email: email,
+      FirebaseFieldNames.bio: bio,
     };
   }
 
@@ -22,6 +31,10 @@ class UserModel {
     return UserModel(
       uid: map[FirebaseFieldNames.uid] as String,
       friends: List<String>.from(map[FirebaseFieldNames.friends] ?? []),
+      //email: map[FirebaseFieldNames.email] as String,
+      //displayName: map[FirebaseFieldNames.displayName] as String,
+      bio: map[FirebaseFieldNames.bio] as String?,
+
     );
   }
 }
