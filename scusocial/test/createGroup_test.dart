@@ -7,7 +7,7 @@ void main() {
   // Checks form is correctly formatted
   testWidgets('MyCustomForm has a title and a form',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(CreateGroupPage());
 
     // Verify the title is displayed
     expect(find.text('Form Validation Demo'), findsOneWidget);
@@ -17,7 +17,7 @@ void main() {
   });
   // verifies validation logic works
   testWidgets('Form validation works', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(CreateGroupPage());
 
     // Tap the submit button without entering any text
     await tester.tap(find.byType(ElevatedButton));
@@ -49,7 +49,7 @@ void main() {
   // error messages are displayed when fields are empty
   testWidgets('Form displays error messages when fields are empty',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(CreateGroupPage());
 
     // Tap the submit button without entering any text
     await tester.tap(find.byType(ElevatedButton));
@@ -63,7 +63,7 @@ void main() {
   // no error messages are shown when the form fields are filled
   testWidgets('Form does not display error messages when fields are filled',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(CreateGroupPage());
 
     // Enter text into the form fields
     await tester.enterText(find.byType(TextFormField).at(0), 'Test Group');
@@ -84,7 +84,7 @@ void main() {
   // Cecks snackbar is displayed
   testWidgets('Submit text is displayed when form is valid',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(CreateGroupPage());
 
     // Enter text into the form fields
     await tester.enterText(find.byType(TextFormField).at(0), 'Test Group');
@@ -101,7 +101,7 @@ void main() {
   });
   // Form field are cleared once form is submitted
   testWidgets('Form fields can be cleared', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(CreateGroupPage());
 
     // Enter text into the form fields
     await tester.enterText(find.byType(TextFormField).at(0), 'Test Group');
