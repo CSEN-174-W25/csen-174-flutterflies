@@ -54,12 +54,17 @@ class EventPage extends StatelessWidget {
             icon: Icon(Icons.add, color: Theme.of(context).cardColor),
             onPressed: () =>
                 _createEvent(context, user.uid, _firestoreService)),
-        IconButton(
-            icon: Icon(Icons.search, color: Theme.of(context).cardColor),
-            onPressed: () => _navigateTo(context, const SearchUserScreen())),
+        // IconButton(
+        //     icon: Icon(Icons.search, color: Theme.of(context).cardColor),
+        //     onPressed: () => _navigateTo(context, const SearchUserScreen())),
         IconButton(
           icon: Icon(Icons.group_add, color: Theme.of(context).cardColor),
           onPressed: () => _navigateTo(context, CreateGroupPage()),
+        ),
+        IconButton(
+          icon: Icon(Icons.person, color: Theme.of(context).cardColor),
+          onPressed: () =>
+              _navigateTo(context, ProfileScreen(userId: user.uid)),
         ),
         IconButton(
           icon: Icon(Icons.groups, color: Theme.of(context).cardColor),
