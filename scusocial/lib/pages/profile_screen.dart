@@ -110,6 +110,14 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    Text(
+  
+                      'Bio: ${userData.bio ?? 'No bio available'}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      ),
+                    ),
                   ],
                 ),
               ),

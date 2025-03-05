@@ -50,6 +50,7 @@ class AuthService {
         'friends': [], // Initialize as empty array
         'calendarId': null, // Placeholder for calendar fields
         'calendarLink': null,
+        'bio': 'I am new to Herd!',
       }, SetOptions(merge: true));
     }
   }

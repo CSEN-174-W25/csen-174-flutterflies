@@ -430,6 +430,7 @@ Widget _buildEventList() {
                       return DropdownMenuItem<String>(
                         value: option,
                         child: Text(option),
+
                       );
                     }).toList(),
                   ),
