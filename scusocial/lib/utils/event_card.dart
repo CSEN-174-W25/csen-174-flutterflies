@@ -20,8 +20,8 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // Get the theme
-    final colors = theme.colorScheme; // Get color scheme
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     final eventName = eventData['name'] ?? 'No Title';
     final eventDate =
@@ -36,7 +36,7 @@ class EventCard extends StatelessWidget {
       elevation: 5,
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: colors.surface, // Use the correct theme color for card
+      color: colors.surface,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -47,7 +47,7 @@ class EventCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: colors.onSecondary, // Use text color from theme
+                color: colors.onSecondary,
               ),
             ),
             const SizedBox(height: 4),
@@ -83,9 +83,8 @@ class EventCard extends StatelessWidget {
             Text(
               eventData['description'] ?? 'No Description',
               style: TextStyle(color: colors.onSecondary.withOpacity(0.9)),
-              maxLines: 3, // Limit the number of lines displayed
-              overflow:
-                  TextOverflow.ellipsis, // Add ellipsis if the text is too long
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 8),
 
@@ -113,41 +112,25 @@ class EventCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            // Accept/Decline Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  icon: Icon(Icons.check, color: colors.onSecondary),
-                  label: Text(isAccepted ? "Accepted" : "Accept"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isAccepted ? colors.secondary : colors.primary,
-                    foregroundColor: colors.onSecondary,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  onPressed:
-                      isAccepted ? null : () => _respondToEvent(eventId, true),
+            // Accept/Decline Button
+            Center(
+              child: ElevatedButton.icon(
+                icon: Icon(
+                  isAccepted ? Icons.close : Icons.check,
+                  color: colors.onSecondary,
                 ),
-                ElevatedButton.icon(
-                  icon: Icon(Icons.close, color: colors.onSecondary),
-                  label: const Text("Decline"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.secondary,
-                    foregroundColor: colors.onSecondary,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
+                label: Text(isAccepted ? "Decline" : "Accept"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isAccepted ? Colors.red : colors.primary,
+                  foregroundColor: colors.onSecondary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  onPressed: () => _respondToEvent(eventId, false),
                 ),
-              ],
+                onPressed: () => _respondToEvent(eventId, !isAccepted),
+              ),
             ),
           ],
         ),
