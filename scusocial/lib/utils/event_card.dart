@@ -52,7 +52,26 @@ class EventCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '📅 ${eventDate.toLocal()} | ⏰ $eventTime',
+              '📅 ${eventDate.toLocal().toString().split(' ')[0].replaceAllMapped(RegExp(r'(\d{4})-(\d{2})-(\d{2})'), (match) {
+                final year = match.group(1);
+                final month = int.parse(match.group(2)!);
+                final day = int.parse(match.group(3)!);
+                const months = [
+                  'January',
+                  'February',
+                  'March',
+                  'April',
+                  'May',
+                  'June',
+                  'July',
+                  'August',
+                  'September',
+                  'October',
+                  'November',
+                  'December'
+                ];
+                return '${months[month - 1]} $day, $year';
+              })} | ⏰ $eventTime',
               style: TextStyle(color: colors.onSecondary),
             ),
             const SizedBox(height: 8),
