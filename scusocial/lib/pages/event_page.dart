@@ -69,6 +69,19 @@ void _cleanupPastEvents() async {
   }
 }
 
+Color _getTagColor(String tag) {
+  switch (tag) {
+    case "Public":
+      return Colors.blue;
+    case "Friend Only":
+      return Colors.green;
+    case "Group":
+      return Colors.orange;
+    default:
+      return Colors.grey;
+  }
+}
+
 /// **Build AppBar UI**
 AppBar _buildAppBar(BuildContext context) {
   return AppBar(
@@ -180,30 +193,63 @@ Widget _buildEventList() {
                 padding: const EdgeInsets.all(12),
                 itemCount: filteredEvents.length,
                 itemBuilder: (context, index) {
-
                   filteredEvents.sort((a, b) {
-                  final aData = a.data() as Map<String, dynamic>;
-                  final bData = b.data() as Map<String, dynamic>;
+                    final aData = a.data() as Map<String, dynamic>;
+                    final bData = b.data() as Map<String, dynamic>;
 
-                  final aDate = (aData['date'] as Timestamp).toDate();
-                  final aTime = aData['time'] as String;
-                  final aFullDateTime = _parseEventTime(aDate, aTime);
+                    final aDate = (aData['date'] as Timestamp).toDate();
+                    final aTime = aData['time'] as String;
+                    final aFullDateTime = _parseEventTime(aDate, aTime);
 
-                  final bDate = (bData['date'] as Timestamp).toDate();
-                  final bTime = bData['time'] as String;
-                  final bFullDateTime = _parseEventTime(bDate, bTime);
+                    final bDate = (bData['date'] as Timestamp).toDate();
+                    final bTime = bData['time'] as String;
+                    final bFullDateTime = _parseEventTime(bDate, bTime);
 
-                  return aFullDateTime.compareTo(bFullDateTime);
-                });
+                    return aFullDateTime.compareTo(bFullDateTime);
+                  });
 
                   final event = filteredEvents[index];
-                  return EventCard(
-                    eventId: event.id,
-                    eventData: event.data() as Map<String, dynamic>,
-                    user: user,
-                    onDelete: () => _deleteEvent(event.id, context),
-                    onViewDetails: () =>
-                        _goToEventDetailsPage(context, event.id),
+                  final eventData = event.data() as Map<String, dynamic>;
+
+                  // ✅ Determine event visibility label
+                  String visibilityLabel = "Public";
+                  if (eventData['visibility'] == 'Visible to all friends') {
+                    visibilityLabel = "Friend Only";
+                  } else if (eventData['visibility'] == 'Visible to a particular group') {
+                    visibilityLabel = "Group";
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10), // Adds spacing between events
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ✅ Small Visibility Tag above the event
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _getTagColor(visibilityLabel), // Dynamic color
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              visibilityLabel,
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ),
+                        ),
+                        
+                        // ✅ The actual event card (unchanged)
+                        EventCard(
+                          eventId: event.id,
+                          eventData: eventData,
+                          user: user,
+                          onDelete: () => _deleteEvent(event.id, context),
+                          onViewDetails: () => _goToEventDetailsPage(context, event.id),
+                        ),
+                      ],
+                    ),
                   );
                 },
               );
@@ -214,6 +260,7 @@ Widget _buildEventList() {
     },
   );
 }
+
 
 
 
