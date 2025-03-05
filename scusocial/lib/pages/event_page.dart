@@ -136,11 +136,11 @@ class EventPage extends StatelessWidget {
         final List<String> friendsList =
             List<String>.from(userData?['friends'] ?? []);
 
-        return FutureBuilder<QuerySnapshot>(
-          future: _firestore
+        return StreamBuilder<QuerySnapshot>(
+          stream: _firestore
               .collection('groups')
               .where('members', arrayContains: user.uid)
-              .get(),
+              .snapshots(),
           builder: (context, groupSnapshot) {
             if (!groupSnapshot.hasData) {
               return Center(child: CircularProgressIndicator());
