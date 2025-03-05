@@ -61,6 +61,15 @@ class EventCard extends StatelessWidget {
               style: TextStyle(color: colors.onSecondary.withOpacity(0.8)),
             ),
             const SizedBox(height: 10),
+            Text(
+              eventData['description'] ?? 'No Description',
+              style: TextStyle(color: colors.onSecondary.withOpacity(0.9)),
+              maxLines: 3, // Limit the number of lines displayed
+              overflow:
+                  TextOverflow.ellipsis, // Add ellipsis if the text is too long
+            ),
+            const SizedBox(height: 8),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
