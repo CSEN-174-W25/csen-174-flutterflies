@@ -70,9 +70,15 @@ class _GroupPageState extends State<GroupPage> {
                     return ListTile(
                       title: Text(group['name']),
                       subtitle: Text(group['description']),
-                      onTap: () {
-                        // Navigate to group details page if needed
-                      },
+                      trailing: 
+                        IconButton (
+                          icon: Icon(Icons.delete),
+                          onPressed: () {
+                            FirebaseFirestore.instance.collection('groups').doc(group['id']).update({
+                              'members': FieldValue.arrayRemove([user.uid]),
+                            });
+                          },
+                        )
                     );
                   },
                 );
