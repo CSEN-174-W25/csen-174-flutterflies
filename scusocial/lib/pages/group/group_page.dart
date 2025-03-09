@@ -70,15 +70,37 @@ class _GroupPageState extends State<GroupPage> {
                     return ListTile(
                       title: Text(group['name']),
                       subtitle: Text(group['description']),
-                      trailing: 
-                        IconButton (
-                          icon: Icon(Icons.delete),
-                          onPressed: () {
-                            FirebaseFirestore.instance.collection('groups').doc(group['id']).update({
-                              'members': FieldValue.arrayRemove([user.uid]),
-                            });
-                          },
-                        )
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Leave Group Button
+                          IconButton(
+                            icon: Icon(Icons.remove_circle),
+                            onPressed: () {
+                              FirebaseFirestore.instance.collection('groups').doc(group['id']).update({
+                                'members': FieldValue.arrayRemove([user.uid]),
+                              });
+                            },
+                          ),
+                          if (group['leader'] == user.uid)
+                            IconButton(
+                              icon: Icon(Icons.delete_forever),
+                              onPressed: () {
+                                FirebaseFirestore.instance.collection('groups').doc(group['id']).delete();
+                              },
+                            ),
+                        ],
+                      ),
+                        
+                        //if user is the leader of the gorup, they have the option to permanently delete the group
+                        // if (group['leader'] == user.uid)
+                        //   IconButton(
+                        //     icon: Icon(Icons.delete_forever),
+                        //     onPressed: () {
+                        //       FirebaseFirestore.instance.collection('groups').doc(group['id']).delete();
+                        //     },
+                        //   ),
+
                     );
                   },
                 );
