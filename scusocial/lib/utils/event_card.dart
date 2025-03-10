@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/calendar_service.dart';
 
 class EventCard extends StatelessWidget {
   final String eventId;
@@ -9,7 +10,7 @@ class EventCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onViewDetails;
 
-  const EventCard({
+  EventCard({
     required this.eventId,
     required this.eventData,
     required this.user,
@@ -138,18 +139,86 @@ class EventCard extends StatelessWidget {
     );
   }
 
+  DateTime _parseEventTime(DateTime eventDate, String eventTime) {
+    final timeParts = eventTime.split(':');
+    final hour = int.parse(timeParts[0]);
+    final minute = int.parse(timeParts[1].split(' ')[0]);
+    final isPM = eventTime.toLowerCase().contains('pm');
+
+    return DateTime(
+      eventDate.year,
+      eventDate.month,
+      eventDate.day,
+      isPM ? (hour % 12) + 12 : hour,
+      minute,
+    );
+  }
+
   void _respondToEvent(String eventId, bool accept) async {
     final eventDoc =
         FirebaseFirestore.instance.collection('events').doc(eventId);
+    final userId = user.uid;
 
     if (accept) {
       await eventDoc.update({
-        'accepted': FieldValue.arrayUnion([user.uid]),
+        'accepted': FieldValue.arrayUnion([userId]),
+      });
+
+      final eventSnapshot = await eventDoc.get();
+      final eventData = eventSnapshot.data();
+      if (eventData == null) return;
+
+      final eventName = eventData['name'];
+      final eventDescription = eventData['description'];
+      final eventLocation = eventData['location'];
+      final eventDate = (eventData['date'] as Timestamp).toDate();
+      final eventTime = eventData['time'];
+
+      final eventStartTime = _parseEventTime(eventDate, eventTime);
+      final eventEndTime = eventStartTime.add(Duration(hours: 1));
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      final calendarId = userDoc.data()?['calendarId'];
+      if (calendarId == null) return;
+
+      final calendarService = CalendarService();
+      final gcalEventId = await calendarService.addEventToPrivateCalendar(
+        calendarId,
+        eventName,
+        eventStartTime,
+        eventEndTime,
+      );
+
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'gcalEventMappings.$eventId': gcalEventId,
       });
     } else {
       await eventDoc.update({
-        'accepted': FieldValue.arrayRemove([user.uid]),
+        'accepted': FieldValue.arrayRemove([userId]),
       });
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      final calendarId = userDoc.data()?['calendarId'];
+      final gcalEventId = userDoc.data()?['gcalEventMappings']?[eventId];
+
+      if (calendarId != null && gcalEventId != null) {
+        final calendarService = CalendarService();
+        await calendarService.removeEventFromPrivateCalendar(
+            calendarId, gcalEventId);
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .update({
+          'gcalEventMappings.$eventId': FieldValue.delete(),
+        });
+      }
     }
   }
 }
