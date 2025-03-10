@@ -3,12 +3,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'create_group.dart';
 import 'search_group.dart';
+import 'package:scusocial/core/constants/firebase_constants.dart';
+import 'group_members_page.dart';
+import 'package:scusocial/services/firestore_service.dart';
+import 'package:scusocial/services/auth_service.dart';
+
 class GroupPage extends StatefulWidget {
   @override
   _GroupPageState createState() => _GroupPageState();
 }
 
 class _GroupPageState extends State<GroupPage> {
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+ 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -70,6 +78,17 @@ class _GroupPageState extends State<GroupPage> {
                     return ListTile(
                       title: Text(group['name']),
                       subtitle: Text(group['description']),
+                      trailing: TextButton(
+                        child: Text('View Members'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GroupMembersPage(groupId: group['id']),
+                            ),
+                          );
+                        },
+                      ),
                       onTap: () {
                         // Navigate to group details page if needed
                       },

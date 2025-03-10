@@ -8,6 +8,7 @@ class UserModel {
   //final String email;
   final String fullName;
   final String? bio;
+  final String? year;
 
   const UserModel({
     required this.uid,
@@ -15,6 +16,7 @@ class UserModel {
     //required this.email,
     required this.fullName,
     required this.bio,
+    required this.year,
 
   });
 
@@ -25,6 +27,8 @@ class UserModel {
       //FirebaseFieldNames.email: email,
       FirebaseFieldNames.fullName: fullName,
       FirebaseFieldNames.bio: bio,
+      FirebaseFieldNames.year: year,
+
     };
   }
 
@@ -35,6 +39,7 @@ class UserModel {
       //email: map[FirebaseFieldNames.email] as String,
       fullName: map[FirebaseFieldNames.fullName] as String,
       bio: map[FirebaseFieldNames.bio] as String?,
+      year: map[FirebaseFieldNames.year] as String?,
 
     );
   }
