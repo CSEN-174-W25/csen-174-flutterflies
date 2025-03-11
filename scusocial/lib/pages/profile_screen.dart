@@ -104,7 +104,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      user?.displayName ?? 'Unknown User',
+                      userData.fullName,
                       style: const TextStyle(
                         fontWeight: FontWeight.w400,
                         fontSize: 21,
@@ -128,6 +128,7 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    if (userData.uid == user?.uid)
                     ElevatedButton(
                       child: Text('Edit Profile'),
                       onPressed: () {

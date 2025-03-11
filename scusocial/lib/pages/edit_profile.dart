@@ -60,7 +60,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         });
 
         // Update display name in FirebaseAuth
-       // await user.updateDisplayName(_yearController.text);
+        //await user.updateDisplayName(_yearController.text);
 
         // Update profile picture if a new one was selected
         if (_imageFile != null) {
