@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'edit_profile.dart';
 import 'dart:io';
 
 class ProfileScreen extends ConsumerWidget {
@@ -103,7 +104,7 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      user?.displayName ?? 'Unknown User',
+                      userData.fullName,
                       style: const TextStyle(
                         fontWeight: FontWeight.w400,
                         fontSize: 21,
@@ -117,7 +118,30 @@ class ProfileScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w400,
                         fontSize: 16,
                       ),
+                    ),          
+                    Text(
+  
+                      'Year: ${userData.year ?? 'No year available'}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      ),
                     ),
+                    const SizedBox(height: 20),
+                    if (userData.uid == user?.uid)
+                    ElevatedButton(
+                      child: Text('Edit Profile'),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditProfileScreen(
+                              userId: userId,
+                            ),
+                          )
+                        );
+                      },
+                    )
                   ],
                 ),
               ),

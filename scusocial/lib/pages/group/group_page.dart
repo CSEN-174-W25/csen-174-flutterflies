@@ -3,12 +3,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'create_group.dart';
 import 'search_group.dart';
+import 'package:scusocial/core/constants/firebase_constants.dart';
+import 'group_members_page.dart';
+import 'package:scusocial/services/firestore_service.dart';
+import 'package:scusocial/services/auth_service.dart';
+
 class GroupPage extends StatefulWidget {
   @override
   _GroupPageState createState() => _GroupPageState();
 }
 
 class _GroupPageState extends State<GroupPage> {
+  final FirebaseAuth auth = FirebaseAuth.instance;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+ 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -73,6 +81,17 @@ class _GroupPageState extends State<GroupPage> {
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          TextButton(
+                            child: Text('View Members'),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GroupMembersPage(groupId: group['id']),
+                                ),
+                              );
+                            },
+                          ),
                           // Leave Group Button
                           IconButton(
                             icon: Icon(Icons.remove_circle),
@@ -91,16 +110,6 @@ class _GroupPageState extends State<GroupPage> {
                             ),
                         ],
                       ),
-                        
-                        //if user is the leader of the gorup, they have the option to permanently delete the group
-                        // if (group['leader'] == user.uid)
-                        //   IconButton(
-                        //     icon: Icon(Icons.delete_forever),
-                        //     onPressed: () {
-                        //       FirebaseFirestore.instance.collection('groups').doc(group['id']).delete();
-                        //     },
-                        //   ),
-
                     );
                   },
                 );

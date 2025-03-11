@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:scusocial/pages/profile_screen.dart';
+import '../features/friends/get_user_info_by_id_provider.dart';
 
 // import calendar servcie
 import '../services/calendar_service.dart';

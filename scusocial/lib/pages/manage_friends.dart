@@ -6,6 +6,7 @@ import '../features/friends/friend-repo.dart';
 import '../core/constants/firebase_constants.dart';
 import '../features/friends/get_user_info_by_id_provider.dart';
 import '../features/friends/search_user_screen.dart';
+import '../pages/profile_screen.dart';
 
 class ManageFriends extends StatefulWidget {
   @override
@@ -202,6 +203,14 @@ class _ManageFriendsState extends State<ManageFriends> {
                                   friendRepository.removeFriend(userId: user.uid);
                                 },
                               ),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context)=>ProfileScreen(userId: user.uid),
+                                  ),
+                                );
+                              }
                             );
                           },
                           error: (error, stackTrace) {
