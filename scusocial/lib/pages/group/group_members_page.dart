@@ -6,24 +6,22 @@ import 'package:scusocial/features/friends/get_user_info_by_id_provider.dart';
 class GroupMembersPage extends ConsumerWidget {
   final String groupId;
   const GroupMembersPage({super.key, required this.groupId});
-  
+
   Stream<List<String>> getGroupMembers() {
     return FirebaseFirestore.instance
         .collection('groups')
         .doc(groupId)
         .snapshots()
         .map((snapshot) {
-      final data = snapshot.data() as Map<String, dynamic>;
-      return List<String>.from(data['members']);
+      final data = snapshot.data() as Map<String, dynamic>? ?? {};
+      return List<String>.from(data['members'] ?? []);
     });
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Group Members'),
-      ),
+      appBar: AppBar(title: const Text('Group Members')),
       body: StreamBuilder<List<String>>(
         stream: getGroupMembers(),
         builder: (context, snapshot) {
@@ -36,31 +34,26 @@ class GroupMembersPage extends ConsumerWidget {
           }
 
           final members = snapshot.data!;
-          print('Members: $members'); // Debugging statement
 
           return ListView.builder(
             itemCount: members.length,
             itemBuilder: (context, index) {
               final memberId = members[index];
-              final userInfo = ref.watch(getUserInfoByIdProvider(memberId));
+              // Use a Consumer widget to isolate the provider watch for each list item
+              return Consumer(
+                builder: (context, ref, child) {
+                  final userInfo = ref.watch(getUserInfoByIdProvider(memberId));
 
-              return userInfo.when(
-                data: (user) {
-                  print('User: ${user.fullName}'); // Debugging statement
-                  return ListTile(
-                    title: Text(user.fullName),
-                  );
-                },
-                loading: () {
-                  print('Loading user info for $memberId'); // Debugging statement
-                  return const ListTile(
-                    title: Text('Loading...'),
-                  );
-                },
-                error: (error, stackTrace) {
-                  print('Error loading user info for $memberId: $error'); // Debugging statement
-                  return ListTile(
-                    title: Text('Error loading user info'),
+                  return userInfo.when(
+                    data: (user) {
+                      return ListTile(title: Text(user.fullName));
+                    },
+                    loading: () {
+                      return const ListTile(title: Text('Loading...'));
+                    },
+                    error: (error, stackTrace) {
+                      return ListTile(title: Text('Error loading user info'));
+                    },
                   );
                 },
               );
