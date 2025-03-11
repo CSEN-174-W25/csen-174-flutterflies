@@ -78,20 +78,38 @@ class _GroupPageState extends State<GroupPage> {
                     return ListTile(
                       title: Text(group['name']),
                       subtitle: Text(group['description']),
-                      trailing: TextButton(
-                        child: Text('View Members'),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => GroupMembersPage(groupId: group['id']),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                            child: Text('View Members'),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => GroupMembersPage(groupId: group['id']),
+                                ),
+                              );
+                            },
+                          ),
+                          // Leave Group Button
+                          IconButton(
+                            icon: Icon(Icons.remove_circle),
+                            onPressed: () {
+                              FirebaseFirestore.instance.collection('groups').doc(group['id']).update({
+                                'members': FieldValue.arrayRemove([user.uid]),
+                              });
+                            },
+                          ),
+                          if (group['leader'] == user.uid)
+                            IconButton(
+                              icon: Icon(Icons.delete_forever),
+                              onPressed: () {
+                                FirebaseFirestore.instance.collection('groups').doc(group['id']).delete();
+                              },
                             ),
-                          );
-                        },
+                        ],
                       ),
-                      onTap: () {
-                        // Navigate to group details page if needed
-                      },
                     );
                   },
                 );
