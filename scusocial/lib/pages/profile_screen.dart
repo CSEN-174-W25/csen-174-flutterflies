@@ -4,23 +4,30 @@ import 'package:scusocial/features/friends/get_user_info_by_id_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'dart:io';
+import 'edit_profile.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key, required this.userId});
 
   final String userId;
   static const routeName = '/profile';
 
-  Future<void> logImageStatus(String? url) async {
-    if (url == null || url.isEmpty) {
-      print("⚠️ Profile photo URL is empty or null.");
-      return;
-    }
+  @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
 
-    print("🖼️ Fetching profile image from: $url");
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _isRetrying = false;
+  String? _photoUrl;
+  bool _imageLoaded = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _photoUrl = FirebaseAuth.instance.currentUser?.photoURL;
+  }
+
+  Future<bool> checkImageAvailability(String url) async {
     try {
       final response = await http.head(
         Uri.parse(url),
@@ -29,31 +36,51 @@ class ProfileScreen extends ConsumerWidget {
               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         },
       );
-
-      print("📡 Image request status: ${response.statusCode}");
-
-      if (response.statusCode != 200) {
-        print("❌ Failed to load image. Status code: ${response.statusCode}");
-      }
+      return response.statusCode == 200;
     } catch (e) {
-      print("❗ Error fetching image: $e");
+      print("❗ Error checking image: $e");
+      return false;
     }
   }
 
   String getFormattedPhotoUrl(String? url) {
     if (url == null || url.isEmpty) return '';
-    return url.contains('?') ? url : '$url?sz=200';
+
+    // Google Photos typically use =s96-c format
+    // Check if it already has a size parameter
+    if (url.contains('=s')) {
+      // Replace existing size with your desired size
+      return url.replaceAll(RegExp(r'=s\d+-c'), '=s200-c');
+    } else if (url.contains('?')) {
+      return '$url&sz=200';
+    } else {
+      return '$url?sz=200';
+    }
+  }
+
+  String getOriginalUrl(String? url) {
+    if (url == null || url.isEmpty) return '';
+
+    // Remove any size parameters
+    if (url.contains('=s')) {
+      return url.replaceAll(RegExp(r'=s\d+-c'), '');
+    } else if (url.contains('?sz=')) {
+      return url.replaceAll(RegExp(r'\?sz=\d+'), '');
+    } else if (url.contains('&sz=')) {
+      return url.replaceAll(RegExp(r'&sz=\d+'), '');
+    }
+    return url;
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = FirebaseAuth.instance.currentUser;
-    final photoUrl = user?.photoURL;
-
-    final userInfo = ref.watch(getUserInfoByIdProvider(userId));
+  Widget build(BuildContext context) {
+    final userInfo = ref.watch(getUserInfoByIdProvider(widget.userId));
 
     return userInfo.when(
       data: (userData) {
+        final formattedPhotoUrl = getFormattedPhotoUrl(_photoUrl ?? '');
+        final originalPhotoUrl = getOriginalUrl(_photoUrl ?? '');
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Profile'),
@@ -69,41 +96,103 @@ class ProfileScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(10),
                 child: Column(
                   children: [
-                    CachedNetworkImage(
-                      imageUrl: getFormattedPhotoUrl(photoUrl),
-                      cacheManager: DefaultCacheManager(),
-                      cacheKey: photoUrl, // Add a unique cache key
-                      httpHeaders: {
-                        'User-Agent':
-                            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                      },
-                      imageBuilder: (context, imageProvider) => CircleAvatar(
-                        radius: 50,
-                        backgroundImage: imageProvider,
-                      ),
-                      placeholder: (context, url) {
-                        print("⌛ Loading image: $url");
-                        return const CircleAvatar(
-                          radius: 50,
-                          child: CircularProgressIndicator(),
-                        );
-                      },
-                      errorWidget: (context, url, error) {
-                        print("🚨 Image failed to load: $url, Error: $error");
-                        return CircleAvatar(
-                          radius: 50,
-                          backgroundImage:
-                              AssetImage('assets/default_avatar.png'),
-                          child: Text(
-                            'Error',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        );
+                    // Profile image with fallback strategy
+                    FutureBuilder<bool>(
+                      // Check image availability only once
+                      future: _imageLoaded
+                          ? Future.value(true)
+                          : checkImageAvailability(formattedPhotoUrl),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                                ConnectionState.waiting &&
+                            !_imageLoaded) {
+                          return const CircleAvatar(
+                            radius: 50,
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        final bool imageAvailable = snapshot.data ?? false;
+
+                        if (imageAvailable) {
+                          _imageLoaded = true;
+                          return Image.network(
+                            formattedPhotoUrl,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) {
+                                return ClipOval(child: child);
+                              }
+                              return const CircleAvatar(
+                                radius: 50,
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              print(
+                                  "🚨 Image failed to load: $formattedPhotoUrl");
+
+                              // Try with the original URL without size parameters
+                              return Image.network(
+                                originalPhotoUrl,
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
+                                  if (loadingProgress == null) {
+                                    return ClipOval(child: child);
+                                  }
+                                  return const CircleAvatar(
+                                    radius: 50,
+                                    child: CircularProgressIndicator(),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) {
+                                  // Final fallback is the default avatar
+                                  return const CircleAvatar(
+                                    radius: 50,
+                                    backgroundImage:
+                                        AssetImage('assets/default_avatar.png'),
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        } else {
+                          // Try with original URL if formatted URL is not available
+                          return Image.network(
+                            originalPhotoUrl,
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) {
+                                return ClipOval(child: child);
+                              }
+                              return const CircleAvatar(
+                                radius: 50,
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              // Final fallback is the default avatar
+                              return const CircleAvatar(
+                                radius: 50,
+                                backgroundImage:
+                                    AssetImage('assets/default_avatar.png'),
+                              );
+                            },
+                          );
+                        }
                       },
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      user?.displayName ?? 'Unknown User',
+                      FirebaseAuth.instance.currentUser?.displayName ??
+                          'Unknown User',
                       style: const TextStyle(
                         fontWeight: FontWeight.w400,
                         fontSize: 21,
@@ -111,12 +200,54 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                     Text(
-  
                       'Bio: ${userData.bio ?? 'No bio available'}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w400,
                         fontSize: 16,
                       ),
+                    ),
+                    Text(
+                      'Year: ${userData.year ?? 'No year available'}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(
+                          child: Text('Edit Profile'),
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => EditProfileScreen(
+                                    userId: widget.userId,
+                                  ),
+                                ));
+                          },
+                        ),
+                        const SizedBox(width: 10),
+                        IconButton(
+                          icon: Icon(Icons.refresh),
+                          onPressed: () {
+                            setState(() {
+                              _isRetrying = true;
+                              _imageLoaded = false;
+                            });
+
+                            Future.delayed(const Duration(milliseconds: 300),
+                                () {
+                              setState(() {
+                                _isRetrying = false;
+                              });
+                            });
+                          },
+                          tooltip: 'Retry loading profile image',
+                        ),
+                      ],
                     ),
                   ],
                 ),
