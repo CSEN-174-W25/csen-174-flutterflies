@@ -81,6 +81,8 @@ flutter:
     - lib/utils/herd-aad12-6627b3250dc9.json
     - assets/herdlogo.png
     - assets/default_avatar.png
+    - assets/tyler.JPG
+    - assets/maddie.JPG
 
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
