@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scusocial/features/friends/get_user_info_by_id_provider.dart';
 
+// This page displays the members of a group in a list format.
 class GroupMembersPage extends ConsumerWidget {
   final String groupId;
   const GroupMembersPage({super.key, required this.groupId});
 
+  // Fetches group members from Firestore 
   Stream<List<String>> getGroupMembers() {
     return FirebaseFirestore.instance
         .collection('groups')
