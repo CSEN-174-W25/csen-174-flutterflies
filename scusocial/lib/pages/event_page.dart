@@ -9,12 +9,14 @@ import '../features/friends/search_user_screen.dart';
 import '../services/firestore_service.dart';
 import '../pages/manage_friends.dart';
 
+//import group pages
 import 'group/group_page.dart';
-
 import 'group/create_group.dart';
 import 'group/search_group.dart';
 
+// import event_card file
 import '../utils/event_card.dart';
+
 
 class EventPage extends StatelessWidget {
   final User user;

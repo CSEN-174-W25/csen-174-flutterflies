@@ -16,6 +16,7 @@ class _GroupPageState extends State<GroupPage> {
       appBar: AppBar(
         title: Text('Group Page'),
         actions: [
+          // Button navigates to CreateGroupPage
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
@@ -27,6 +28,7 @@ class _GroupPageState extends State<GroupPage> {
               );
             },
           ),
+          // Button navigates to SearchGroupPage
           IconButton(
             icon: Icon(Icons.search),
             onPressed: () {
@@ -40,6 +42,7 @@ class _GroupPageState extends State<GroupPage> {
           ),
         ]
         ),
+        // Searches for groups that user is a member of and displays them 
       body: user == null
           ? Center(child: Text('Please log in to see your groups'))
           : StreamBuilder<QuerySnapshot>(
@@ -62,7 +65,7 @@ class _GroupPageState extends State<GroupPage> {
                           ...doc.data() as Map<String, dynamic>,
                         })
                     .toList();
-
+                // Displays list of groups that user is a member of
                 return ListView.builder(
                   itemCount: userGroups.length,
                   itemBuilder: (context, index) {
@@ -82,6 +85,7 @@ class _GroupPageState extends State<GroupPage> {
                               });
                             },
                           ),
+                          // Delete Group Button
                           if (group['leader'] == user.uid)
                             IconButton(
                               icon: Icon(Icons.delete_forever),
@@ -91,16 +95,6 @@ class _GroupPageState extends State<GroupPage> {
                             ),
                         ],
                       ),
-                        
-                        //if user is the leader of the gorup, they have the option to permanently delete the group
-                        // if (group['leader'] == user.uid)
-                        //   IconButton(
-                        //     icon: Icon(Icons.delete_forever),
-                        //     onPressed: () {
-                        //       FirebaseFirestore.instance.collection('groups').doc(group['id']).delete();
-                        //     },
-                        //   ),
-
                     );
                   },
                 );
