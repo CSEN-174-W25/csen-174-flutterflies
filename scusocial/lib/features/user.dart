@@ -1,6 +1,7 @@
 import 'package:scusocial/core/constants/firebase_constants.dart';
 import 'package:flutter/foundation.dart' show immutable;
 
+// This model represents a user in the application, including their unique ID, friends list, full name, bio, and year of study.
 @immutable
 class UserModel {
   final String uid;

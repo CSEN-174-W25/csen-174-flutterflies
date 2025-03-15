@@ -5,11 +5,13 @@ import '../../core/constants/firebase_constants.dart';
 
 @immutable
 class FriendRepository {
+  // Initialize FirebaseAuth and FirebaseFirestore instances
   final FirebaseAuth auth;
   final FirebaseFirestore firestore;
 
   FriendRepository({required this.auth, required this.firestore});
 
+  // Get the current user's UID
   String get _myUid => auth.currentUser!.uid;
 
   // Initialize user document
@@ -46,6 +48,7 @@ class FriendRepository {
     }
   }
 
+  // Method to accept a friend request 
   Future<String?> acceptFriendRequest({required String userId}) async {
     try {
       final requestRef = firestore

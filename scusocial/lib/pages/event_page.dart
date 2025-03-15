@@ -310,6 +310,7 @@ class EventPage extends StatelessWidget {
     }
   }
 
+  // Shows a dialog with a title and message
   void _showDialog(BuildContext context, String title, String message) {
     showDialog(
       context: context,
@@ -327,12 +328,13 @@ class EventPage extends StatelessWidget {
       },
     );
   }
-
+  // Create a new event using a dialog
   void _createEvent(
       BuildContext context, String userId, FirestoreService firestoreService) {
     showDialog(
       context: context,
       builder: (context) {
+        // Controllers for the text fields
         final TextEditingController nameController = TextEditingController();
         final TextEditingController descriptionController =
             TextEditingController();
@@ -549,6 +551,7 @@ class EventPage extends StatelessWidget {
     );
   }
 
+  // Parse event time from string to DateTime
   DateTime _parseEventTime(DateTime eventDate, String eventTime) {
     final timeParts = eventTime.split(':');
     final hour = int.parse(timeParts[0]);
@@ -564,6 +567,7 @@ class EventPage extends StatelessWidget {
     );
   }
 
+  // Delete event and remove from the calendar
   void _deleteEvent(String eventId, BuildContext context) async {
     final confirmation = await showDialog<bool>(
       context: context,

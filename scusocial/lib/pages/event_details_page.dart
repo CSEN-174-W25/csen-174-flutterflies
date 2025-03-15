@@ -15,6 +15,7 @@ class EventDetailsPage extends StatefulWidget {
 }
 
 class _EventDetailsPageState extends State<EventDetailsPage> {
+  // Initialize FirestoreService with FirebaseFirestore instance
   final FirestoreService _firestoreService =
       FirestoreService(firestore: FirebaseFirestore.instance);
   final TextEditingController _commentController = TextEditingController();

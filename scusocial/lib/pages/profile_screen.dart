@@ -12,6 +12,7 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Get the current user from FirebaseAuth and user info from the provider
     final user = FirebaseAuth.instance.currentUser;
     final userInfo = ref.watch(getUserInfoByIdProvider(userId));
 

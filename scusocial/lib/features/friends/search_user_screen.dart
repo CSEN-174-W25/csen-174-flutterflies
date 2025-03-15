@@ -18,6 +18,7 @@ class _SearchUserScreenState extends State<SearchUserScreen> {
   // Inject Firebase instances into FriendRepository
   late final FriendRepository _friendRepo;
 
+  // Initialize FriendRepository in initState
   @override
   void initState() {
     super.initState();

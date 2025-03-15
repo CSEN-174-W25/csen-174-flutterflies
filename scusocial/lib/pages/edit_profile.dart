@@ -27,7 +27,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.initState();
     _loadUserData();
   }
-
+  // Method to load user data from Firestore and populate the form fields
   Future<void> _loadUserData() async {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
     final userData = userDoc.data();
@@ -37,7 +37,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _yearController.text = user.year ?? '';
     }
   }
-
+  // Method to pick an image from the gallery
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -46,7 +46,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       });
     }
   }
-
+  // Method to save the profile data
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       final user = FirebaseAuth.instance.currentUser;

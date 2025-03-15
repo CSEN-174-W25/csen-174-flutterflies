@@ -24,7 +24,7 @@ class _ManageFriendsState extends State<ManageFriends> {
       firestore: FirebaseFirestore.instance,
     );
   }
-
+  // Fetches the list of friend requests for the current user
   Stream<List<String>> _getFriendRequests() {
     String myUid = FirebaseAuth.instance.currentUser!.uid;
     print('Fetching friend requests for user: $myUid');
@@ -53,6 +53,7 @@ class _ManageFriendsState extends State<ManageFriends> {
     await friendRepository.declineFriendRequest(userId: userId);
   }
 
+  // Fetches the list of friends for the current user
   Stream<List<String>> _getFriends(String userId) {
     String myUid = FirebaseAuth.instance.currentUser!.uid;
     print('Getting friends for user: $userId');

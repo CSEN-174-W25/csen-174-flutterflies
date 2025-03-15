@@ -13,6 +13,7 @@ class _SignInPageState extends State<SignInPage> {
   User? _user;
   bool _isSigningIn = false;
 
+  // method handles Google sign-in process
   Future<void> _signInWithGoogle() async {
     setState(() {
       _isSigningIn = true;
@@ -31,6 +32,7 @@ class _SignInPageState extends State<SignInPage> {
     });
   }
 
+  // method handles sign-out process
   Future<void> _signOut() async {
     await _authService.signOut();
     setState(() {

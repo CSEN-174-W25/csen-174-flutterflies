@@ -6,6 +6,7 @@ class EventCard extends StatelessWidget {
   final dynamic
       firestoreService; // Replace with FirestoreService type when available
 
+  // Constructor to initialize the EventCard with event data, userId, and FirestoreService
   EventCard({
     required this.event,
     required this.userId,
