@@ -2,118 +2,148 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:scusocial/pages/profile_screen.dart';
+import '../features/friends/get_user_info_by_id_provider.dart';
 
 // import calendar servcie
 import '../services/calendar_service.dart';
 import '../features/friends/search_user_screen.dart';
 import '../services/firestore_service.dart';
 import '../pages/manage_friends.dart';
+
+//import group pages
+import 'group/group_page.dart';
 import 'group/create_group.dart';
 import 'group/search_group.dart';
+
+// import event_card file
+import '../utils/event_card.dart';
+
 
 class EventPage extends StatelessWidget {
   final User user;
   final Future<void> Function() signOut;
   final bool eventIsTesting;
-  late final FirestoreService _firestoreService;
+  final FirestoreService _firestoreService;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   EventPage({
     required this.user,
     required this.signOut,
     required this.eventIsTesting,
-  }) {
-    _firestoreService = FirestoreService(firestore: _firestore);
-  }
+    Key? key,
+  })  : _firestoreService =
+            FirestoreService(firestore: FirebaseFirestore.instance),
+        super(key: key);
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    appBar: AppBar(
-      title: Text('Welcome, ${user.displayName}'),
+  Widget build(BuildContext context) {
+    // Call method to clean up past events on build
+    _cleanupPastEvents();
+
+    return Scaffold(
+      appBar: _buildAppBar(context),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: _buildEventList(),
+    );
+  }
+
+  /// **Cleanup expired events**
+  void _cleanupPastEvents() async {
+    final now = DateTime.now();
+
+    try {
+      final querySnapshot = await _firestore
+          .collection('events')
+          .where('creatorId', isEqualTo: user.uid)
+          .get();
+
+      for (var doc in querySnapshot.docs) {
+        final eventData = doc.data();
+        final eventDate = (eventData['date'] as Timestamp).toDate();
+        final eventTime = eventData['time'] as String;
+        final fullEventDateTime = _parseEventTime(eventDate, eventTime);
+
+        if (fullEventDateTime.isBefore(now)) {
+          await doc.reference.delete();
+        }
+      }
+    } catch (e) {
+      print('Error cleaning up past events: $e');
+    }
+  }
+
+  Color _getTagColor(String tag) {
+    switch (tag) {
+      case "Public":
+        return Colors.blue;
+      case "Friend Only":
+        return Colors.green;
+      case "Group":
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  /// **Build AppBar UI**
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      title: Text('Welcome, ${user.displayName ?? 'User'}'),
+      backgroundColor: Theme.of(context).primaryColor,
+      elevation: 4.0,
       leading: IconButton(
-        icon: Icon(Icons.calendar_today),
+        icon: Icon(Icons.calendar_today, color: Theme.of(context).cardColor),
         onPressed: () => _showCalendarSubscriptionLink(context),
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.add),
+          icon: Icon(Icons.add, color: Theme.of(context).cardColor),
           onPressed: () => _createEvent(context, user.uid, _firestoreService),
         ),
         IconButton(
-          icon: Icon(Icons.search),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SearchUserScreen(),
-              ),
-            );
-          },
+          icon: Icon(Icons.person, color: Theme.of(context).cardColor),
+          onPressed: () =>
+              _navigateTo(context, ProfileScreen(userId: user.uid)),
         ),
         IconButton(
-          icon: Icon(Icons.add),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CreateGroupPage(),
-              ),
-            );
-          },
+          icon: Icon(Icons.group_add, color: Theme.of(context).cardColor),
+          onPressed: () => _navigateTo(context, GroupPage()),
         ),
         IconButton(
-          icon: Icon(Icons.search),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SearchGroupPage(),
-              ),
-            );
-          },
-        ),
-        IconButton(
-          icon: Icon(Icons.group),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ManageFriends(),
-              ),
-            );
-          },
+          icon: Icon(Icons.group, color: Theme.of(context).cardColor),
+          onPressed: () => _navigateTo(context, ManageFriends()),
         ),
         PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert, color: Theme.of(context).cardColor),
           onSelected: (value) {
-            if (value == 'sign_out') {
-              signOut();
-            }
+            if (value == 'sign_out') signOut();
           },
           itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'sign_out',
-              child: Text('Sign Out'),
-            ),
+            const PopupMenuItem(value: 'sign_out', child: Text('Sign Out')),
           ],
         ),
       ],
-    ),
-    body: FutureBuilder<DocumentSnapshot>(
+    );
+  }
+
+  /// **Build event list UI**
+  Widget _buildEventList() {
+    return FutureBuilder<DocumentSnapshot>(
       future: _firestore.collection('users').doc(user.uid).get(),
       builder: (context, userSnapshot) {
         if (!userSnapshot.hasData) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
         final userData = userSnapshot.data!.data() as Map<String, dynamic>?;
         final List<String> friendsList =
             List<String>.from(userData?['friends'] ?? []);
 
-        return FutureBuilder<QuerySnapshot>(
-          future: _firestore
+        return StreamBuilder<QuerySnapshot>(
+          stream: _firestore
               .collection('groups')
               .where('members', arrayContains: user.uid)
-              .get(),
+              .snapshots(),
           builder: (context, groupSnapshot) {
             if (!groupSnapshot.hasData) {
               return Center(child: CircularProgressIndicator());
@@ -127,9 +157,10 @@ Widget build(BuildContext context) {
               stream: _firestore.collection('events').snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
 
+                final now = DateTime.now();
                 final events = snapshot.data!.docs;
 
                 final filteredEvents = events.where((event) {
@@ -138,117 +169,115 @@ Widget build(BuildContext context) {
                   final String creatorId = eventData['creatorId'];
                   final String? groupName = eventData['group'];
 
+                  final eventDate = (eventData['date'] as Timestamp).toDate();
+                  final eventTime = eventData['time'] as String;
+                  final fullEventDateTime =
+                      _parseEventTime(eventDate, eventTime);
+
+                  // Only show events in the future
+                  if (fullEventDateTime.isBefore(now)) return false;
+
+                  // Public events should always be shown
                   if (visibility == 'Public') return true;
+
+                  // Friend events: Show if the creator is a friend OR if the current user is the creator
                   if (visibility == 'Visible to all friends' &&
-                      friendsList.contains(creatorId)) {
+                      (friendsList.contains(creatorId) ||
+                          creatorId == user.uid)) {
                     return true;
                   }
+
+                  // Show group-restricted events if the user is part of the group
                   if (visibility == 'Visible to a particular group') {
                     return groupName != null && userGroups.contains(groupName);
                   }
+
                   return false;
                 }).toList();
 
-                return Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: filteredEvents.length,
-                        itemBuilder: (context, index) {
-                          final event = filteredEvents[index];
-                          final eventId = event.id;
-                          final eventData = event.data() as Map<String, dynamic>;
-                          final eventName = eventData['name'];
-                          final eventDate =
-                              (eventData['date'] as Timestamp).toDate();
-                          final eventTime = eventData['time'];
-                          final eventDescription = eventData['description'];
-                          final eventLocation = eventData['location'];
-                          final acceptedUsers =
-                              List<String>.from(eventData['accepted'] ?? []);
-                          final eventCreatorId = eventData['creatorId'];
+                return ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: filteredEvents.length,
+                  itemBuilder: (context, index) {
+                    filteredEvents.sort((a, b) {
+                      final aData = a.data() as Map<String, dynamic>;
+                      final bData = b.data() as Map<String, dynamic>;
 
-                          return Card(
-                            margin:
-                                EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    eventName,
-                                    style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text('Date: ${eventDate.toLocal()}'),
-                                  Text('Time: $eventTime'),
-                                  SizedBox(height: 8),
-                                  Text('Location: $eventLocation'),
-                                  SizedBox(height: 8),
-                                  Text('Description: $eventDescription'),
-                                  SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text('${acceptedUsers.length} accepted'),
-                                      Row(
-                                        children: [
-                                          ElevatedButton(
-                                            onPressed: () =>
-                                                _respondToEvent(eventId, true),
-                                            child: Text('Accept'),
-                                          ),
-                                          SizedBox(width: 8),
-                                          ElevatedButton(
-                                            onPressed: () =>
-                                                _respondToEvent(eventId, false),
-                                            child: Text('Decline'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      if (user.uid == eventCreatorId)
-                                        IconButton(
-                                          icon: Icon(Icons.delete),
-                                          onPressed: () =>
-                                              _deleteEvent(eventId, context),
-                                          color: Colors.red,
-                                        ),
-                                    ],
-                                  ),
-                                  SizedBox(height: 16),
-                                  GestureDetector(
-                                    onTap: () =>
-                                        _goToEventDetailsPage(context, eventId),
-                                    child: Text(
-                                      'View Comments',
-                                      style: TextStyle(color: Colors.blue),
-                                    ),
-                                  ),
-                                ],
+                      final aDate = (aData['date'] as Timestamp).toDate();
+                      final aTime = aData['time'] as String;
+                      final aFullDateTime = _parseEventTime(aDate, aTime);
+
+                      final bDate = (bData['date'] as Timestamp).toDate();
+                      final bTime = bData['time'] as String;
+                      final bFullDateTime = _parseEventTime(bDate, bTime);
+
+                      return aFullDateTime.compareTo(bFullDateTime);
+                    });
+
+                    final event = filteredEvents[index];
+                    final eventData = event.data() as Map<String, dynamic>;
+
+                    // ✅ Determine event visibility label
+                    String visibilityLabel = "Public";
+                    if (eventData['visibility'] == 'Visible to all friends') {
+                      visibilityLabel = "Friend Only";
+                    } else if (eventData['visibility'] ==
+                        'Visible to a particular group') {
+                      visibilityLabel = "Group";
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                          bottom: 10), // Adds spacing between events
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ✅ Small Visibility Tag above the event
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _getTagColor(
+                                    visibilityLabel), // Dynamic color
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                visibilityLabel,
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12),
                               ),
                             ),
-                          );
-                        },
+                          ),
+
+                          // ✅ The actual event card (unchanged)
+                          EventCard(
+                            eventId: event.id,
+                            eventData: eventData,
+                            user: user,
+                            onDelete: () => _deleteEvent(event.id, context),
+                            onViewDetails: () =>
+                                _goToEventDetailsPage(context, event.id),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 );
               },
             );
           },
         );
       },
-    ),
-  );
-}
+    );
+  }
 
+  void _navigateTo(BuildContext context, Widget page) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+  }
 
   void _showCalendarSubscriptionLink(BuildContext context) async {
     try {
@@ -300,277 +329,224 @@ Widget build(BuildContext context) {
   }
 
   void _createEvent(
-    BuildContext context, String userId, FirestoreService firestoreService) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      final TextEditingController nameController = TextEditingController();
-      final TextEditingController descriptionController =
-          TextEditingController();
-      final TextEditingController locationController =
-          TextEditingController();
-      DateTime? selectedDate;
-      TimeOfDay? selectedTime;
-      String selectedVisibility = 'Public';
-      final List<String> visibilityOptions = [
-        'Public',
-        'Visible to all friends',
-        'Visible to a particular group'
-      ];
-      String? selectedGroup;
-      List<String> userGroups = []; // Stores groups where the user is a member
-      bool isLoadingGroups = false;
+      BuildContext context, String userId, FirestoreService firestoreService) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final TextEditingController nameController = TextEditingController();
+        final TextEditingController descriptionController =
+            TextEditingController();
+        final TextEditingController locationController =
+            TextEditingController();
+        DateTime? selectedDate;
+        TimeOfDay? selectedTime;
+        String selectedVisibility = 'Public';
+        final List<String> visibilityOptions = [
+          'Public',
+          'Visible to all friends',
+          'Visible to a particular group'
+        ];
+        String? selectedGroup;
+        List<String> userGroups =
+            []; // Stores groups where the user is a member
+        bool isLoadingGroups = false;
 
-      return StatefulBuilder(
-        builder: (context, setState) {
-          Future<void> fetchUserGroups() async {
-            setState(() => isLoadingGroups = true); // Moved inside StatefulBuilder
-            final groupsSnapshot = await FirebaseFirestore.instance
-                .collection('groups')
-                .where('members', arrayContains: userId)
-                .get();
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> fetchUserGroups() async {
+              setState(
+                  () => isLoadingGroups = true); // Moved inside StatefulBuilder
+              final groupsSnapshot = await FirebaseFirestore.instance
+                  .collection('groups')
+                  .where('members', arrayContains: userId)
+                  .get();
 
-            userGroups = groupsSnapshot.docs
-                .map((doc) => doc['name'] as String)
-                .toList();
+              userGroups = groupsSnapshot.docs
+                  .map((doc) => doc['name'] as String)
+                  .toList();
 
-            setState(() => isLoadingGroups = false); // Moved inside StatefulBuilder
-          }
+              setState(() =>
+                  isLoadingGroups = false); // Moved inside StatefulBuilder
+            }
 
-          return AlertDialog(
-            title: Text('Create Event'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(labelText: 'Event Name'),
-                  ),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: InputDecoration(labelText: 'Description'),
-                  ),
-                  TextField(
-                    controller: locationController,
-                    decoration: InputDecoration(labelText: 'Location'),
-                  ),
-                  SizedBox(height: 10),
+            return AlertDialog(
+              title: Text('Create Event'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(labelText: 'Event Name'),
+                    ),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: InputDecoration(labelText: 'Description'),
+                    ),
+                    TextField(
+                      controller: locationController,
+                      decoration: InputDecoration(labelText: 'Location'),
+                    ),
+                    SizedBox(height: 10),
 
-                  // Date Picker
-                  ListTile(
-                    title: Text(selectedDate == null
-                        ? 'Select Date'
-                        : 'Date: ${selectedDate!.toLocal()}'.split(' ')[0]),
-                    trailing: Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          selectedDate = pickedDate;
-                        });
-                      }
-                    },
-                  ),
-
-                  // Time Picker
-                  ListTile(
-                    title: Text(selectedTime == null
-                        ? 'Select Time'
-                        : 'Time: ${selectedTime!.format(context)}'),
-                    trailing: Icon(Icons.access_time),
-                    onTap: () async {
-                      final pickedTime = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (pickedTime != null) {
-                        setState(() {
-                          selectedTime = pickedTime;
-                        });
-                      }
-                    },
-                  ),
-
-                  // Visibility Dropdown
-                  DropdownButton<String>(
-                    value: selectedVisibility,
-                    onChanged: (newValue) {
-                      setState(() {
-                        selectedVisibility = newValue!;
-                        if (selectedVisibility == 'Visible to a particular group') {
-                          fetchUserGroups();
-                        }
-                      });
-                    },
-                    items: visibilityOptions.map((String option) {
-                      return DropdownMenuItem<String>(
-                        value: option,
-                        child: Text(option),
-                      );
-                    }).toList(),
-                  ),
-
-                  // Group Selection (only if "Visible to a particular group" is chosen)
-                  if (selectedVisibility == 'Visible to a particular group')
-                    isLoadingGroups
-                        ? CircularProgressIndicator()
-                        : DropdownButton<String>(
-                            value: selectedGroup,
-                            hint: Text('Select a Group'),
-                            onChanged: (newGroup) {
-                              setState(() {
-                                selectedGroup = newGroup;
-                              });
-                            },
-                            items: userGroups.map((String groupName) {
-                              return DropdownMenuItem<String>(
-                                value: groupName,
-                                child: Text(groupName),
-                              );
-                            }).toList(),
-                          ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  if (nameController.text.isNotEmpty &&
-                      descriptionController.text.isNotEmpty &&
-                      locationController.text.isNotEmpty &&
-                      selectedDate != null &&
-                      selectedTime != null &&
-                      (selectedVisibility != 'Visible to a particular group' ||
-                          selectedGroup != null)) {
-                    // Convert TimeOfDay to a string format
-                    final formattedTime = selectedTime!.format(context);
-
-                    // Create event in Firestore
-                    await firestoreService.createEvent(
-                      nameController.text,
-                      descriptionController.text,
-                      locationController.text,
-                      selectedDate!,
-                      formattedTime,
-                      userId,
-                      selectedVisibility,
-                      selectedGroup ?? '',
-                    );
-
-                    // Save event under the selected group if applicable
-                    if (selectedVisibility == 'Visible to a particular group' &&
-                        selectedGroup != null) {
-                      await FirebaseFirestore.instance
-                          .collection('groups')
-                          .where('name', isEqualTo: selectedGroup)
-                          .get()
-                          .then((querySnapshot) {
-                        if (querySnapshot.docs.isNotEmpty) {
-                          final groupId = querySnapshot.docs.first.id;
-                          FirebaseFirestore.instance
-                              .collection('groups')
-                              .doc(groupId)
-                              .update({
-                            'events': FieldValue.arrayUnion([
-                              {
-                                'name': nameController.text,
-                                'description': descriptionController.text,
-                                'location': locationController.text,
-                                'date': selectedDate!.toIso8601String(),
-                                'time': formattedTime,
-                                'creatorId': userId
-                              }
-                            ])
+                    // Date Picker
+                    ListTile(
+                      title: Text(selectedDate == null
+                          ? 'Select Date'
+                          : 'Date: ${selectedDate!.toLocal()}'.split(' ')[0]),
+                      trailing: Icon(Icons.calendar_today),
+                      onTap: () async {
+                        final pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            selectedDate = pickedDate;
                           });
                         }
-                      });
-                    }
+                      },
+                    ),
 
-                    Navigator.pop(context);
-                  } else {
-                    // Show error if fields are missing
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please fill in all fields')),
-                    );
-                  }
-                },
-                child: Text('Create'),
+                    // Time Picker
+                    ListTile(
+                      title: Text(selectedTime == null
+                          ? 'Select Time'
+                          : 'Time: ${selectedTime!.format(context)}'),
+                      trailing: Icon(Icons.access_time),
+                      onTap: () async {
+                        final pickedTime = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                            initialEntryMode: TimePickerEntryMode.input);
+                        if (pickedTime != null) {
+                          setState(() {
+                            selectedTime = pickedTime;
+                          });
+                        }
+                      },
+                    ),
+
+                    // Visibility Dropdown
+                    DropdownButton<String>(
+                      value: selectedVisibility,
+                      onChanged: (newValue) {
+                        setState(() {
+                          selectedVisibility = newValue!;
+                          if (selectedVisibility ==
+                              'Visible to a particular group') {
+                            fetchUserGroups();
+                          }
+                        });
+                      },
+                      items: visibilityOptions.map((String option) {
+                        return DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(option),
+                        );
+                      }).toList(),
+                    ),
+
+                    // Group Selection (only if "Visible to a particular group" is chosen)
+                    if (selectedVisibility == 'Visible to a particular group')
+                      isLoadingGroups
+                          ? CircularProgressIndicator()
+                          : DropdownButton<String>(
+                              value: selectedGroup,
+                              hint: Text('Select a Group'),
+                              onChanged: (newGroup) {
+                                setState(() {
+                                  selectedGroup = newGroup;
+                                });
+                              },
+                              items: userGroups.map((String groupName) {
+                                return DropdownMenuItem<String>(
+                                  value: groupName,
+                                  child: Text(groupName),
+                                );
+                              }).toList(),
+                            ),
+                  ],
+                ),
               ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.isNotEmpty &&
+                        descriptionController.text.isNotEmpty &&
+                        locationController.text.isNotEmpty &&
+                        selectedDate != null &&
+                        selectedTime != null &&
+                        (selectedVisibility !=
+                                'Visible to a particular group' ||
+                            selectedGroup != null)) {
+                      // Convert TimeOfDay to a string format
+                      final formattedTime = selectedTime!.format(context);
 
+                      // Create event in Firestore
+                      await firestoreService.createEvent(
+                        nameController.text,
+                        descriptionController.text,
+                        locationController.text,
+                        selectedDate!,
+                        formattedTime,
+                        userId,
+                        selectedVisibility,
+                        selectedGroup ?? '',
+                      );
 
-  void _respondToEvent(String eventId, bool accept) async {
-    final eventDoc = _firestore.collection('events').doc(eventId);
-    final userId = user.uid;
+                      // Save event under the selected group if applicable
+                      if (selectedVisibility ==
+                              'Visible to a particular group' &&
+                          selectedGroup != null) {
+                        await FirebaseFirestore.instance
+                            .collection('groups')
+                            .where('name', isEqualTo: selectedGroup)
+                            .get()
+                            .then((querySnapshot) {
+                          if (querySnapshot.docs.isNotEmpty) {
+                            final groupId = querySnapshot.docs.first.id;
+                            FirebaseFirestore.instance
+                                .collection('groups')
+                                .doc(groupId)
+                                .update({
+                              'events': FieldValue.arrayUnion([
+                                {
+                                  'name': nameController.text,
+                                  'description': descriptionController.text,
+                                  'location': locationController.text,
+                                  'date': selectedDate!.toIso8601String(),
+                                  'time': formattedTime,
+                                  'creatorId': userId
+                                }
+                              ])
+                            });
+                          }
+                        });
+                      }
 
-    if (accept) {
-      await eventDoc.update({
-        'accepted': FieldValue.arrayUnion([userId]),
-      });
-
-      final eventSnapshot = await eventDoc.get();
-      final eventData = eventSnapshot.data();
-      if (eventData == null) return;
-
-      final eventName = eventData['name'];
-      final eventDescription = eventData['description'];
-      final eventLocation = eventData['location'];
-      final eventDate = (eventData['date'] as Timestamp).toDate();
-      final eventTime = eventData['time'];
-
-      final eventStartTime = _parseEventTime(eventDate, eventTime);
-      final eventEndTime = eventStartTime.add(Duration(hours: 1));
-
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      final calendarId = userDoc.data()?['calendarId'];
-      if (calendarId == null) return;
-
-      final calendarService = CalendarService();
-      final gcalEventId = await calendarService.addEventToPrivateCalendar(
-        calendarId,
-        eventName,
-        eventStartTime,
-        eventEndTime,
-      );
-
-      await _firestore.collection('users').doc(userId).update({
-        'gcalEventMappings.$eventId': gcalEventId,
-      });
-    } else {
-      await eventDoc.update({
-        'accepted': FieldValue.arrayRemove([userId]),
-      });
-
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      final calendarId = userDoc.data()?['calendarId'];
-      final gcalEventId = userDoc.data()?['gcalEventMappings']?[eventId];
-
-      if (calendarId != null && gcalEventId != null) {
-        final calendarService = CalendarService();
-        await calendarService.removeEventFromPrivateCalendar(
-            calendarId, gcalEventId);
-
-        await _firestore.collection('users').doc(userId).update({
-          'gcalEventMappings.$eventId': FieldValue.delete(),
-        });
-      }
-    }
+                      Navigator.pop(context);
+                    } else {
+                      // Show error if fields are missing
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please fill in all fields')),
+                      );
+                    }
+                  },
+                  child: Text('Create'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   DateTime _parseEventTime(DateTime eventDate, String eventTime) {
@@ -747,21 +723,6 @@ class __CommentSectionState extends State<_CommentSection> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class ManageFriendsScreen extends StatelessWidget {
-  const ManageFriendsScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Friends'),
-      ),
-      body: const Center(
-        child: Text('Manage your friends here!'),
-      ),
     );
   }
 }

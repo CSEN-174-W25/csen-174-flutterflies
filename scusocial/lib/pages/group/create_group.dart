@@ -7,15 +7,20 @@ class CreateGroupPage extends StatefulWidget {
   _CreateGroupPageState createState() => _CreateGroupPageState();
 }
 
+// CreateGroupPageState handles state for the CreateGroupPage widget.
 class _CreateGroupPageState extends State<CreateGroupPage> {
+  // Form key validates form inputs
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
+  // _createGroup method creates a new group in Firestore and adds current user as a member and leader.
   Future<void> _createGroup() async {
     if (_formKey.currentState!.validate()) {
       final User? user = FirebaseAuth.instance.currentUser;
       final String userID = user!.uid;
+
+      // Create a new group in Firestore 
       await FirebaseFirestore.instance.collection('groups').add({
         'name': _nameController.text,
         'description': _descriptionController.text,
@@ -34,6 +39,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     }
   }
 
+  // build method that returns UI for CreateGroupPage
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,6 +50,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
           key: _formKey,
           child: Column(
             children: [
+              // TextFormField for group name input
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(labelText: 'Group Name'),
@@ -54,6 +61,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                   return null;
                 },
               ),
+              // TextFormField for description input
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(labelText: 'Description'),
@@ -65,6 +73,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 },
               ),
               SizedBox(height: 20),
+              // Create Group Button
               ElevatedButton(
                 onPressed: _createGroup,
                 child: Text('Create Group'),
