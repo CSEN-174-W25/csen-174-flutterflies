@@ -14,3 +14,10 @@ Herd is a social networking application designed to connect students within a un
 - **Group Membership**: Users can join groups and see a list of groups they are a part of.
 - **Event Details**: Detailed view of events including name, date, time, location, and description.
 - **Comments**: Users can comment on events to engage with other participants.
+
+## Technologies Used
+
+- **Flutter**: For building the cross-platform mobile application.
+- **Firebase Authentication**: For secure user authentication.
+- **Cloud Firestore**: For real-time database and data storage.
+- **Dart**: The programming language used with Flutter.
